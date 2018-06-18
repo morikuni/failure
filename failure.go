@@ -160,18 +160,18 @@ func CallStackOf(err error) CallStack {
 	return nil
 }
 
-// InfosOf extracts infos from the error.
-func InfosOf(err error) []Info {
+// InfoListOf extracts infos from the error.
+func InfoListOf(err error) []Info {
 	if err == nil {
 		return nil
 	}
 
 	if f, ok := err.(Failure); ok {
 		if f.Info != nil {
-			return append([]Info{f.Info}, InfosOf(f.Underlying)...)
+			return append([]Info{f.Info}, InfoListOf(f.Underlying)...)
 		}
 		if f.Underlying != nil {
-			return InfosOf(f.Underlying)
+			return InfoListOf(f.Underlying)
 		}
 	}
 	return nil

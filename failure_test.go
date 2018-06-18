@@ -80,7 +80,7 @@ func TestFailure(t *testing.T) {
 		t.Run(title, func(t *testing.T) {
 			assert.Equal(t, test.Expect.Code, failure.CodeOf(test.Input.Err))
 			assert.Equal(t, test.Expect.Message, failure.MessageOf(test.Input.Err))
-			assert.Equal(t, test.Expect.Fields, failure.InfosOf(test.Input.Err))
+			assert.Equal(t, test.Expect.Fields, failure.InfoListOf(test.Input.Err))
 			assert.Equal(t, test.Expect.Error, test.Input.Err.Error())
 
 			cs := failure.CallStackOf(test.Input.Err)
