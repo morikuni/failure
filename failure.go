@@ -21,10 +21,16 @@ type Info map[string]interface{}
 
 // Failure is an error representing failure of something.
 type Failure struct {
-	Code       Code
-	Message    string
-	CallStack  CallStack
-	Info       Info
+	// Code is a error code to handle the error in your source code.
+	Code Code
+	// Message is a error message for the application user.
+	// So the message should be humal-readable and be helpful.
+	Message string
+	// CallStack is a call stack at the time of the error occurs.
+	CallStack CallStack
+	// Info is information on why the error occurred.
+	Info Info
+	// Underlying is a underlying error.
 	Underlying error
 }
 
