@@ -56,12 +56,14 @@ func main() {
 	// forbidden
 	fmt.Println(failure.MessageOf(err))
 	// You have no grants to access to X.
-	fmt.Println(failure.InfosOf(err))
+	fmt.Println(failure.InfoListOf(err))
 	// [map[hello:world] map[id:123]]
 	fmt.Println(failure.CallStackOf(err))
-	// [GetX] /Users/morikuni/go/src/github.com/morikuni/failure/example/main.go:15
-	// [main] /Users/morikuni/go/src/github.com/morikuni/failure/example/main.go:19
-	// [main] /usr/local/Cellar/go/1.10.1/libexec/src/runtime/proc.go:198
-	// [goexit] /usr/local/Cellar/go/1.10.1/libexec/src/runtime/asm_amd64.s:2361
+	// GetX: main: main: goexit: goexit
+	fmt.Printf("%+v", failure.CallStackOf(err))
+	// [GetX] /app/example/main.go:15
+	// [main] /app/example/main.go:19
+	// [main] /usr/local/go/src/runtime/proc.go:195
+	// [goexit] /usr/local/go/src/runtime/asm_amd64.s:2337
 }
 ```
