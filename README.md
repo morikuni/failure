@@ -15,7 +15,7 @@ type Failure struct {
 	// Code is a error code to handle the error in your source code.
 	Code Code
 	// Message is a error message for the application user.
-	// So the message should be humal-readable and be helpful.
+	// So the message should be human-readable and should be helpful.
 	Message string
 	// CallStack is a call stack at the time of the error occurs.
 	CallStack CallStack
