@@ -94,6 +94,7 @@ func WithFields(err error, info Info) error {
 type Code string
 
 // CodeOf extracts Code from the error.
+// If the error does not contain any code, Unknown is returned.
 func CodeOf(err error) Code {
 	if err == nil {
 		return ""
