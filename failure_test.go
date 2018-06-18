@@ -54,12 +54,12 @@ func TestFailure(t *testing.T) {
 				"TestFailure(code_b): TestFailure(code_a)",
 			},
 		},
-		"with stack": {
-			Input{failure.WithFields(io.EOF, nil)},
+		"with info": {
+			Input{failure.WithInfo(io.EOF, failure.Info{"bbb": 1})},
 			Expect{
 				failure.Unknown,
 				failure.DefaultMessage,
-				nil,
+				[]failure.Info{{"bbb": 1}},
 				58,
 				"TestFailure: " + io.EOF.Error(),
 			},

@@ -84,8 +84,8 @@ func Translate(err error, code Code, message string, info Info) error {
 	}
 }
 
-// WithFields adds fields to the error.
-func WithFields(err error, info Info) error {
+// WithInfo adds information to the error.
+func WithInfo(err error, info Info) error {
 	return Failure{
 		"",
 		"",
