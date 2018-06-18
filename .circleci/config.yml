@@ -1,0 +1,26 @@
+defaults: &defaults
+  docker:
+    - image: circleci/golang:latest
+  working_directory: /go/src/github.com/morikuni/failure
+
+version: 2
+jobs:
+  build:
+    <<: *defaults
+    steps:
+      - checkout
+      - run:
+          name: install
+          command: make install
+      - run:
+          name: init
+          command: make init
+      - run:
+          name: test
+          command: make test
+      - run:
+          name: coverage
+          command: go test -coverpkg=. -covermode=atomic -coverprofile=coverage.txt
+      - run:
+          name: upload coverage
+          command: bash <(curl -s https://codecov.io/bash)
