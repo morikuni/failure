@@ -11,8 +11,8 @@ import (
 )
 
 const (
-	TestCodeA failure.Code = "a"
-	TestCodeB failure.Code = "b"
+	TestCodeA failure.Code = "code_a"
+	TestCodeB failure.Code = "code_b"
 )
 
 func TestFailure(t *testing.T) {
@@ -41,7 +41,7 @@ func TestFailure(t *testing.T) {
 				"aaa",
 				[]failure.Info{{"bbb": 1}},
 				38,
-				"aaa",
+				"TestFailure(code_a)",
 			},
 		},
 		"nested": {
@@ -51,7 +51,7 @@ func TestFailure(t *testing.T) {
 				"aaa",
 				[]failure.Info{{"bbb": 1}, {"zzz": true}},
 				34,
-				"aaa: xxx",
+				"TestFailure(code_b): TestFailure(code_a)",
 			},
 		},
 		"with stack": {
@@ -61,7 +61,7 @@ func TestFailure(t *testing.T) {
 				failure.DefaultMessage,
 				nil,
 				58,
-				io.EOF.Error(),
+				"TestFailure: " + io.EOF.Error(),
 			},
 		},
 		"pkg/errors": {
@@ -71,7 +71,7 @@ func TestFailure(t *testing.T) {
 				"aaa",
 				nil,
 				35,
-				"aaa: yyy",
+				"TestFailure(code_b): yyy",
 			},
 		},
 	}
@@ -81,6 +81,7 @@ func TestFailure(t *testing.T) {
 			assert.Equal(t, test.Expect.Code, failure.CodeOf(test.Input.Err))
 			assert.Equal(t, test.Expect.Message, failure.MessageOf(test.Input.Err))
 			assert.Equal(t, test.Expect.Fields, failure.InfosOf(test.Input.Err))
+			assert.Equal(t, test.Expect.Error, test.Input.Err.Error())
 
 			st := failure.CallStackOf(test.Input.Err)
 			require.NotEmpty(t, st)

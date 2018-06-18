@@ -3,7 +3,7 @@
 package failure
 
 import (
-	"fmt"
+	"strings"
 
 	"github.com/pkg/errors"
 )
@@ -30,10 +30,30 @@ type Failure struct {
 
 // Failure implements error.
 func (e Failure) Error() string {
-	if e.Underlying == nil {
-		return e.Message
+	buf := strings.Builder{}
+
+	if len(e.CallStack) != 0 {
+		buf.WriteString(e.CallStack[0].Func())
 	}
-	return fmt.Sprintf("%s: %s", e.Message, e.Underlying)
+
+	if e.Code != "" {
+		if buf.Len() != 0 {
+			buf.WriteRune('(')
+			buf.WriteString(string(e.Code))
+			buf.WriteRune(')')
+		} else {
+			buf.WriteString(string(e.Code))
+		}
+	}
+
+	if e.Underlying != nil {
+		if buf.Len() != 0 {
+			buf.WriteString(": ")
+		}
+		buf.WriteString(e.Underlying.Error())
+	}
+
+	return buf.String()
 }
 
 // New returns application error.
