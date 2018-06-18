@@ -2,6 +2,7 @@ package failure
 
 import (
 	"fmt"
+	"io"
 	"path"
 	"path/filepath"
 	"runtime"
@@ -15,14 +16,27 @@ import (
 // CallStack represents call stack.
 type CallStack []PC
 
-// String implements fmt.Stringer.
-func (cs CallStack) String() string {
-	buf := strings.Builder{}
-	for _, pc := range cs {
-		buf.WriteString(pc.String())
-		buf.WriteString("\n")
+// Format implements fmt.Formatter.
+func (cs CallStack) Format(s fmt.State, verb rune) {
+	switch verb {
+	case 'v':
+		switch {
+		case s.Flag('+'):
+			for _, pc := range cs {
+				fmt.Fprintf(s, "%+v\n", pc)
+			}
+		case s.Flag('#'):
+			fmt.Fprintf(s, "%#v", []PC(cs))
+		default:
+			l := len(cs)
+			for _, pc := range cs[:l] {
+				fmt.Fprintf(s, "%v: ", pc)
+			}
+			fmt.Fprintf(s, "%v", cs[l-1])
+		}
+	case 's':
+		fmt.Fprintf(s, "%v", cs)
 	}
-	return buf.String()
 }
 
 // Callers returns call stack for the current state.
@@ -106,7 +120,19 @@ func (pc PC) Pkg() string {
 	return fs[0]
 }
 
-// String implements fmt.Stringer.
-func (pc PC) String() string {
-	return fmt.Sprintf("[%s] %s:%d", pc.Func(), pc.Path(), pc.Line())
+// Format implements fmt.Formatter.
+func (pc PC) Format(s fmt.State, verb rune) {
+	switch verb {
+	case 'v':
+		switch {
+		case s.Flag('+'):
+			fmt.Fprintf(s, "[%s] %s:%d", pc.Func(), pc.Path(), pc.Line())
+		case s.Flag('#'):
+			fmt.Fprintf(s, "%s:%d", pc.Path(), pc.Line())
+		default:
+			io.WriteString(s, pc.Func())
+		}
+	case 's':
+		io.WriteString(s, pc.Func())
+	}
 }
