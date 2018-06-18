@@ -83,9 +83,11 @@ func TestFailure(t *testing.T) {
 			assert.Equal(t, test.Expect.Fields, failure.InfosOf(test.Input.Err))
 			assert.Equal(t, test.Expect.Error, test.Input.Err.Error())
 
-			st := failure.CallStackOf(test.Input.Err)
-			require.NotEmpty(t, st)
-			assert.Equal(t, test.Expect.StackLine, st[0].Line())
+			cs := failure.CallStackOf(test.Input.Err)
+			require.NotEmpty(t, cs)
+			if !assert.Equal(t, test.Expect.StackLine, cs[0].Line()) {
+				t.Log(cs[0])
+			}
 		})
 	}
 

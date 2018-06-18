@@ -52,7 +52,9 @@ func CallStackFromPkgErrors(st errors.StackTrace) CallStack {
 type PC uintptr
 
 func (pc PC) pc() uintptr {
-	// I don't know why add -1 from pc.
+	// Copied from github.com/pkg/errors.Frame
+	// I don't know why add -1 here.
+	// If remove this, some test fails.
 	return uintptr(pc) - 1
 }
 
