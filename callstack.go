@@ -60,7 +60,7 @@ func (pc PC) pc() uintptr {
 func (pc PC) Path() string {
 	fn := runtime.FuncForPC(pc.pc())
 	if fn == nil {
-		return "unknown"
+		return "???"
 	}
 	file, _ := fn.FileLine(pc.pc())
 	return file
@@ -87,7 +87,21 @@ func (pc PC) Func() string {
 	if fn == nil {
 		return ""
 	}
-	return path.Base(fn.Name())
+	fs := strings.Split(path.Base(fn.Name()), ".")
+	if len(fs) >= 1 {
+		return fs[1]
+	}
+	return fs[0]
+}
+
+// Pkg returns a package name for pc.
+func (pc PC) Pkg() string {
+	fn := runtime.FuncForPC(pc.pc())
+	if fn == nil {
+		return ""
+	}
+	fs := strings.Split(path.Base(fn.Name()), ".")
+	return fs[0]
 }
 
 // String implements fmt.Stringer.

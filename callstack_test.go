@@ -1,27 +1,30 @@
-package failure
+package failure_test
 
 import (
 	"testing"
 
+	"github.com/morikuni/failure"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-func X() CallStack {
-	return Callers(0)
+func X() failure.CallStack {
+	return failure.Callers(0)
 }
 
 func TestCallers(t *testing.T) {
 	cs := X()
 
 	assert.Contains(t, cs[0].Path(), "github.com/morikuni/failure/callstack_test.go")
-	assert.Equal(t, cs[0].Func(), "failure.X")
-	assert.Equal(t, cs[0].Line(), 12)
+	assert.Equal(t, cs[0].Func(), "X")
+	assert.Equal(t, cs[0].Line(), 13)
+	assert.Equal(t, cs[0].Pkg(), "failure_test")
 
 	assert.Contains(t, cs[1].Path(), "github.com/morikuni/failure/callstack_test.go")
-	assert.Equal(t, cs[1].Func(), "failure.TestCallers")
-	assert.Equal(t, cs[1].Line(), 16)
+	assert.Equal(t, cs[1].Func(), "TestCallers")
+	assert.Equal(t, cs[1].Line(), 17)
+	assert.Equal(t, cs[1].Pkg(), "failure_test")
 }
 
 func Y() error {
@@ -37,13 +40,15 @@ func TestCallStackFromPkgErrors(t *testing.T) {
 	st, ok := err.(StackTracer)
 	require.True(t, ok)
 
-	cs := CallStackFromPkgErrors(st.StackTrace())
+	cs := failure.CallStackFromPkgErrors(st.StackTrace())
 
 	assert.Contains(t, cs[0].Path(), "github.com/morikuni/failure/callstack_test.go")
-	assert.Equal(t, cs[0].Func(), "failure.Y")
-	assert.Equal(t, cs[0].Line(), 28)
+	assert.Equal(t, cs[0].Func(), "Y")
+	assert.Equal(t, cs[0].Line(), 31)
+	assert.Equal(t, cs[0].Pkg(), "failure_test")
 
 	assert.Contains(t, cs[1].Path(), "github.com/morikuni/failure/callstack_test.go")
-	assert.Equal(t, cs[1].Func(), "failure.TestCallStackFromPkgErrors")
-	assert.Equal(t, cs[1].Line(), 36)
+	assert.Equal(t, cs[1].Func(), "TestCallStackFromPkgErrors")
+	assert.Equal(t, cs[1].Line(), 39)
+	assert.Equal(t, cs[1].Pkg(), "failure_test")
 }
