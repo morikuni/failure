@@ -13,7 +13,7 @@ var (
 	DefaultMessage = "An internal error has occurred. Please contact the developer."
 
 	// Unknown represents unknown error code.
-	Unknown Code = "unknwon"
+	Unknown Code = "unknown"
 )
 
 // Info is information on why the error occurred.
