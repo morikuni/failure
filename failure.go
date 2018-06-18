@@ -3,7 +3,7 @@
 package failure
 
 import (
-	"strings"
+	"bytes"
 
 	"github.com/pkg/errors"
 )
@@ -36,7 +36,7 @@ type Failure struct {
 
 // Failure implements error.
 func (e Failure) Error() string {
-	buf := strings.Builder{}
+	buf := &bytes.Buffer{}
 
 	if len(e.CallStack) != 0 {
 		buf.WriteString(e.CallStack[0].Func())
