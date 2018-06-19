@@ -4,6 +4,8 @@ package failure
 
 import (
 	"bytes"
+	"fmt"
+	"io"
 
 	"github.com/pkg/errors"
 )
@@ -72,6 +74,41 @@ func (f Failure) Error() string {
 	}
 
 	return buf.String()
+}
+
+// Format implements fmt.Formatter.
+func (f Failure) Format(s fmt.State, verb rune) {
+	switch verb {
+	case 'v':
+		switch {
+		case s.Flag('+'):
+			fmt.Fprintf(s, "%v\n  Info:\n", f)
+			for _, info := range InfoListOf(f) {
+				for k, v := range info {
+					fmt.Fprintf(s, "    %s = %v\n", k, v)
+				}
+			}
+			fmt.Fprint(s, "  CallStack:\n")
+			for _, pc := range CallStackOf(f) {
+				fmt.Fprintf(s, "    %+v\n", pc)
+			}
+		case s.Flag('#'):
+			// Re-define struct to remove Format method.
+			// Prevent recursive call.
+			type Failure struct {
+				Code       Code
+				Message    string
+				CallStack  CallStack
+				Info       Info
+				Underlying error
+			}
+			fmt.Fprintf(s, "%#v", Failure(f))
+		default:
+			io.WriteString(s, f.Error())
+		}
+	case 's':
+		fmt.Fprintf(s, "%v", f)
+	}
 }
 
 // New returns an application error.

@@ -2,7 +2,6 @@ package failure
 
 import (
 	"fmt"
-	"io"
 	"path"
 	"path/filepath"
 	"runtime"
@@ -33,9 +32,9 @@ func (cs CallStack) Format(s fmt.State, verb rune) {
 				return
 			}
 			for _, pc := range cs[:l-1] {
-				fmt.Fprintf(s, "%v: ", pc)
+				fmt.Fprintf(s, "%s: ", pc.Func())
 			}
-			fmt.Fprintf(s, "%v", cs[l-1])
+			fmt.Fprintf(s, "%v", cs[l-1].Func())
 		}
 	case 's':
 		fmt.Fprintf(s, "%v", cs)
@@ -127,15 +126,11 @@ func (pc PC) Pkg() string {
 func (pc PC) Format(s fmt.State, verb rune) {
 	switch verb {
 	case 'v':
-		switch {
-		case s.Flag('+'):
-			fmt.Fprintf(s, "[%s] %s:%d", pc.Func(), pc.Path(), pc.Line())
-		case s.Flag('#'):
-			fmt.Fprintf(s, "%s:%d", pc.Path(), pc.Line())
-		default:
-			io.WriteString(s, pc.Func())
+		if s.Flag('+') {
+			fmt.Fprintf(s, "[%s] ", pc.Func())
 		}
+		fallthrough
 	case 's':
-		io.WriteString(s, pc.Func())
+		fmt.Fprintf(s, "%s:%d", pc.Path(), pc.Line())
 	}
 }

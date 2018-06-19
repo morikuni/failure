@@ -81,12 +81,12 @@ func TestFormat(t *testing.T) {
 
 	pc := cs[0]
 
-	assert.Equal(t,
-		`X`,
+	assert.Regexp(t,
+		`/.+/github.com/morikuni/failure/callstack_test.go:14`,
 		fmt.Sprintf("%v", pc),
 	)
-	assert.Equal(t,
-		`X`,
+	assert.Regexp(t,
+		`/.+/github.com/morikuni/failure/callstack_test.go:14`,
 		fmt.Sprintf("%s", pc),
 	)
 	assert.Regexp(t,

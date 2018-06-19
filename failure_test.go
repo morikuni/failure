@@ -1,6 +1,7 @@
 package failure_test
 
 import (
+	"fmt"
 	"io"
 	"testing"
 
@@ -40,7 +41,7 @@ func TestFailure(t *testing.T) {
 				TestCodeA,
 				failure.DefaultMessage,
 				[]failure.Info{{"aaa": 1}},
-				38,
+				39,
 				"TestFailure(code_a)",
 			},
 		},
@@ -50,7 +51,7 @@ func TestFailure(t *testing.T) {
 				TestCodeB,
 				"xxx",
 				[]failure.Info{{"zzz": true}},
-				34,
+				35,
 				"TestFailure(code_b): TestFailure(code_a)",
 			},
 		},
@@ -60,7 +61,7 @@ func TestFailure(t *testing.T) {
 				TestCodeB,
 				"aaa",
 				[]failure.Info{{"bbb": 1}, {"zzz": true}},
-				34,
+				35,
 				"TestFailure(code_b): TestFailure(code_a)",
 			},
 		},
@@ -70,7 +71,7 @@ func TestFailure(t *testing.T) {
 				failure.Unknown,
 				failure.DefaultMessage,
 				nil,
-				68,
+				69,
 				"TestFailure: " + io.EOF.Error(),
 			},
 		},
@@ -80,7 +81,7 @@ func TestFailure(t *testing.T) {
 				TestCodeB,
 				"aaa",
 				nil,
-				35,
+				36,
 				"TestFailure(code_b): yyy",
 			},
 		},
@@ -119,5 +120,60 @@ func TestFailure(t *testing.T) {
 			}
 		})
 	}
+}
 
+func TestFailure_Format(t *testing.T) {
+	type Input struct {
+		Err    error
+		Format string
+	}
+	type Expect struct {
+		OutputRegexp string
+	}
+	type Test struct {
+		Input
+		Expect
+	}
+
+	base := failure.New(TestCodeA).WithMessage("xxx").WithInfo(failure.Info{"zzz": true})
+	tests := map[string]Test{
+		"v": {
+			Input{
+				failure.Wrap(base),
+				"%v",
+			},
+			Expect{
+				`TestFailure_Format: TestFailure_Format\(code_a\)`,
+			},
+		},
+		"+v": {
+			Input{
+				failure.Wrap(base),
+				"%+v",
+			},
+			Expect{
+				`TestFailure_Format: TestFailure_Format\(code_a\)
+  Info:
+    zzz = true
+  CallStack:
+    \[TestFailure_Format\] /.*/github.com/morikuni/failure/failure_test.go:138
+    \[.*`,
+			},
+		},
+		"#v": {
+			Input{
+				failure.Wrap(base).WithMessage("hello"),
+				"%#v",
+			},
+			Expect{
+				`failure.Failure{Code:"", Message:"hello", CallStack:\[\]failure.PC{.*}, Info:failure.Info\(nil\), Underlying:failure.Failure{.*}}`,
+			},
+		},
+	}
+
+	for title, test := range tests {
+		t.Run(title, func(t *testing.T) {
+			assert.Regexp(t, test.Expect.OutputRegexp, fmt.Sprintf(test.Input.Format, test.Input.Err))
+		})
+	}
 }
