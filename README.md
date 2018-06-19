@@ -43,13 +43,16 @@ const (
 )
 
 func GetX(id int) (int, error) {
-	return 0, failure.New(NotFound, "X does not exist.", failure.Info{"id": id})
+	return 0, failure.New(NotFound).WithMessage("X does not exist.").WithInfo(failure.Info{"id": id})
 }
 
 func main() {
 	_, err := GetX(123)
 
-	err = failure.Translate(err, Forbidden, "You have no grants to access to X.", failure.Info{"hello": "world"})
+	err = failure.Translate(err, Forbidden).
+		WithMessage("You have no grants to access to X.").
+		WithInfo(failure.Info{"hello": "world"})
+
 	fmt.Println(err)
 	// main(forbidden): GetX(not_found)
 	fmt.Println(failure.CodeOf(err))
