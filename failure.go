@@ -111,6 +111,11 @@ func (f Failure) Format(s fmt.State, verb rune) {
 	}
 }
 
+// Cause implements github.com/pkg/errors.causer.
+func (f Failure) Cause() error {
+	return f.Underlying
+}
+
 // New returns an application error.
 func New(code Code) Failure {
 	return Failure{
