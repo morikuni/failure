@@ -108,7 +108,7 @@ func (pc PC) Func() string {
 	}
 	fs := strings.Split(path.Base(fn.Name()), ".")
 	if len(fs) >= 1 {
-		return fs[1]
+		return strings.Join(fs[1:], ".")
 	}
 	return fs[0]
 }
