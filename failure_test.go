@@ -31,21 +31,31 @@ func TestFailure(t *testing.T) {
 		Expect
 	}
 
-	base := failure.New(TestCodeA, "xxx", failure.Info{"zzz": true})
+	base := failure.New(TestCodeA).WithMessage("xxx").WithInfo(failure.Info{"zzz": true})
 	pkgErr := errors.New("yyy")
 	tests := map[string]Test{
 		"new": {
-			Input{failure.New(TestCodeA, "aaa", failure.Info{"bbb": 1})},
+			Input{failure.New(TestCodeA).WithInfo(failure.Info{"aaa": 1})},
 			Expect{
 				TestCodeA,
-				"aaa",
-				[]failure.Info{{"bbb": 1}},
+				failure.DefaultMessage,
+				[]failure.Info{{"aaa": 1}},
 				38,
 				"TestFailure(code_a)",
 			},
 		},
-		"nested": {
-			Input{failure.Translate(base, TestCodeB, "aaa", failure.Info{"bbb": 1})},
+		"translate": {
+			Input{failure.Translate(base, TestCodeB)},
+			Expect{
+				TestCodeB,
+				"xxx",
+				[]failure.Info{{"zzz": true}},
+				34,
+				"TestFailure(code_b): TestFailure(code_a)",
+			},
+		},
+		"overwrite": {
+			Input{failure.Translate(base, TestCodeB).WithMessage("aaa").WithInfo(failure.Info{"bbb": 1})},
 			Expect{
 				TestCodeB,
 				"aaa",
@@ -54,18 +64,18 @@ func TestFailure(t *testing.T) {
 				"TestFailure(code_b): TestFailure(code_a)",
 			},
 		},
-		"with info": {
-			Input{failure.WithInfo(io.EOF, failure.Info{"bbb": 1})},
+		"wrap": {
+			Input{failure.Wrap(io.EOF)},
 			Expect{
 				failure.Unknown,
 				failure.DefaultMessage,
-				[]failure.Info{{"bbb": 1}},
-				58,
+				nil,
+				68,
 				"TestFailure: " + io.EOF.Error(),
 			},
 		},
 		"pkg/errors": {
-			Input{failure.Translate(pkgErr, TestCodeB, "aaa", nil)},
+			Input{failure.Translate(pkgErr, TestCodeB).WithMessage("aaa")},
 			Expect{
 				TestCodeB,
 				"aaa",

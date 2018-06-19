@@ -34,63 +34,75 @@ type Failure struct {
 	Underlying error
 }
 
+// WithMessage attaches a message to the failure.
+func (f Failure) WithMessage(message string) Failure {
+	f.Message = message
+	return f
+}
+
+// WithInfo attaches information to the failure.
+func (f Failure) WithInfo(info Info) Failure {
+	f.Info = info
+	return f
+}
+
 // Failure implements error.
-func (e Failure) Error() string {
+func (f Failure) Error() string {
 	buf := &bytes.Buffer{}
 
-	if len(e.CallStack) != 0 {
-		buf.WriteString(e.CallStack[0].Func())
+	if len(f.CallStack) != 0 {
+		buf.WriteString(f.CallStack[0].Func())
 	}
 
-	if e.Code != "" {
+	if f.Code != "" {
 		if buf.Len() != 0 {
 			buf.WriteRune('(')
-			buf.WriteString(string(e.Code))
+			buf.WriteString(string(f.Code))
 			buf.WriteRune(')')
 		} else {
-			buf.WriteString(string(e.Code))
+			buf.WriteString(string(f.Code))
 		}
 	}
 
-	if e.Underlying != nil {
+	if f.Underlying != nil {
 		if buf.Len() != 0 {
 			buf.WriteString(": ")
 		}
-		buf.WriteString(e.Underlying.Error())
+		buf.WriteString(f.Underlying.Error())
 	}
 
 	return buf.String()
 }
 
-// New returns application error.
-func New(code Code, message string, info Info) error {
+// New returns an application error.
+func New(code Code) Failure {
 	return Failure{
 		code,
-		message,
+		"",
 		Callers(1),
-		info,
+		nil,
 		nil,
 	}
 }
 
-// Translate translates an error to application error.
-func Translate(err error, code Code, message string, info Info) error {
+// Translate translates the error to an application error.
+func Translate(err error, code Code) Failure {
 	return Failure{
 		code,
-		message,
+		"",
 		Callers(1),
-		info,
+		nil,
 		err,
 	}
 }
 
-// WithInfo adds information to the error.
-func WithInfo(err error, info Info) error {
+// Wrap wraps the error.
+func Wrap(err error) Failure {
 	return Failure{
 		"",
 		"",
 		Callers(1),
-		info,
+		nil,
 		err,
 	}
 }
