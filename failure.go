@@ -1,4 +1,4 @@
-// Package failure is a utility package for handling an application error.
+// Package failure is a utility package for handling application errors.
 // Inspired by https://middlemost.com/failure-is-your-domain and github.com/pkg/errors.
 package failure
 
