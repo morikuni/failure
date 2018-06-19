@@ -84,6 +84,16 @@ func TestFailure(t *testing.T) {
 				"TestFailure(code_b): yyy",
 			},
 		},
+		"nil": {
+			Input{nil},
+			Expect{
+				"",
+				"",
+				nil,
+				0,
+				"",
+			},
+		},
 	}
 
 	for title, test := range tests {
@@ -91,12 +101,21 @@ func TestFailure(t *testing.T) {
 			assert.Equal(t, test.Expect.Code, failure.CodeOf(test.Input.Err))
 			assert.Equal(t, test.Expect.Message, failure.MessageOf(test.Input.Err))
 			assert.Equal(t, test.Expect.Fields, failure.InfoListOf(test.Input.Err))
-			assert.Equal(t, test.Expect.Error, test.Input.Err.Error())
+
+			if test.Expect.Error != "" {
+				assert.EqualError(t, test.Input.Err, test.Expect.Error)
+			} else {
+				assert.Nil(t, test.Input.Err)
+			}
 
 			cs := failure.CallStackOf(test.Input.Err)
-			require.NotEmpty(t, cs)
-			if !assert.Equal(t, test.Expect.StackLine, cs[0].Line()) {
-				t.Log(cs[0])
+			if test.Expect.StackLine != 0 {
+				require.NotEmpty(t, cs)
+				if !assert.Equal(t, test.Expect.StackLine, cs[0].Line()) {
+					t.Log(cs[0])
+				}
+			} else {
+				assert.Nil(t, cs)
 			}
 		})
 	}

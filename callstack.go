@@ -29,7 +29,10 @@ func (cs CallStack) Format(s fmt.State, verb rune) {
 			fmt.Fprintf(s, "%#v", []PC(cs))
 		default:
 			l := len(cs)
-			for _, pc := range cs[:l] {
+			if l == 0 {
+				return
+			}
+			for _, pc := range cs[:l-1] {
 				fmt.Fprintf(s, "%v: ", pc)
 			}
 			fmt.Fprintf(s, "%v", cs[l-1])

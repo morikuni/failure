@@ -1,6 +1,7 @@
 package failure_test
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/morikuni/failure"
@@ -51,4 +52,45 @@ func TestCallStackFromPkgErrors(t *testing.T) {
 	assert.Equal(t, cs[1].Func(), "TestCallStackFromPkgErrors")
 	assert.Equal(t, cs[1].Line(), 39)
 	assert.Equal(t, cs[1].Pkg(), "failure_test")
+}
+
+func TestFormat(t *testing.T) {
+	cs := X()[:2]
+
+	assert.Equal(t,
+		`X: TestFormat`,
+		fmt.Sprintf("%v", cs),
+	)
+	assert.Equal(t,
+		`X: TestFormat`,
+		fmt.Sprintf("%s", cs),
+	)
+	assert.Regexp(t,
+		`\[\]failure.PC{/.+/github.com/morikuni/failure/callstack_test.go:14, /.+/github.com/morikuni/failure/callstack_test.go:58}`,
+		fmt.Sprintf("%#v", cs),
+	)
+	assert.Regexp(t,
+		`\[X\] /.+/github.com/morikuni/failure/callstack_test.go:14
+\[TestFormat\] /.+/github.com/morikuni/failure/callstack_test.go:58`,
+		fmt.Sprintf("%+v", cs),
+	)
+
+	pc := cs[0]
+
+	assert.Equal(t,
+		`X`,
+		fmt.Sprintf("%v", pc),
+	)
+	assert.Equal(t,
+		`X`,
+		fmt.Sprintf("%s", pc),
+	)
+	assert.Regexp(t,
+		`/.+/github.com/morikuni/failure/callstack_test.go:14`,
+		fmt.Sprintf("%#v", pc),
+	)
+	assert.Regexp(t,
+		`\[X\] /.+/github.com/morikuni/failure/callstack_test.go:14`,
+		fmt.Sprintf("%+v", pc),
+	)
 }
