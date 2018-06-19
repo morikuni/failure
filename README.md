@@ -29,7 +29,7 @@ type Failure struct {
 
 ## Example
 
-Let's define your application error codes and work with it.
+The failure works with error codes you defined for your application.
 
 ```go
 package main
@@ -43,6 +43,7 @@ import (
 	"github.com/morikuni/failure"
 )
 
+// error codes for your application.
 const (
 	NotFound  failure.Code = "not_found"
 	Forbidden failure.Code = "forbidden"
@@ -94,7 +95,9 @@ func HandleError(w http.ResponseWriter, err error) {
 	}
 
 	io.WriteString(w, failure.MessageOf(err))
-
+	
+	// The failure contains useful messages for creating response and debugging.
+	
 	fmt.Println(err)
 	// GetProject(forbidden): GetACL(not_found)
 	fmt.Println(failure.CodeOf(err))
@@ -119,13 +122,12 @@ func HandleError(w http.ResponseWriter, err error) {
 func main() {
 	http.HandleFunc("/", Handler)
 	http.ListenAndServe(":8080", nil)
-	
-    // $ http "localhost:8080/?projectID=123&userID=456"
-    // HTTP/1.1 403 Forbidden
-    // Content-Length: 40
-    // Content-Type: text/plain; charset=utf-8
-    // Date: Tue, 19 Jun 2018 02:56:32 GMT
-    // 
-    // You have no grant to access the project.
+	// $ http "localhost:8080/?projectID=123&userID=456"
+	// HTTP/1.1 403 Forbidden
+	// Content-Length: 40
+	// Content-Type: text/plain; charset=utf-8
+	// Date: Tue, 19 Jun 2018 02:56:32 GMT
+	//
+	// You have no grant to access the project.
 }
 ```

@@ -148,6 +148,7 @@ func MessageOf(err error) string {
 }
 
 // CallStackOf extracts call stack from the error.
+// Returned call stack is for the deepest error in underlying errors.
 func CallStackOf(err error) CallStack {
 	if err == nil {
 		return nil
