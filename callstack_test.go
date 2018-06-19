@@ -19,12 +19,12 @@ func TestCallers(t *testing.T) {
 
 	assert.Contains(t, cs[0].Path(), "github.com/morikuni/failure/callstack_test.go")
 	assert.Equal(t, cs[0].Func(), "X")
-	assert.Equal(t, cs[0].Line(), 13)
+	assert.Equal(t, cs[0].Line(), 14)
 	assert.Equal(t, cs[0].Pkg(), "failure_test")
 
 	assert.Contains(t, cs[1].Path(), "github.com/morikuni/failure/callstack_test.go")
 	assert.Equal(t, cs[1].Func(), "TestCallers")
-	assert.Equal(t, cs[1].Line(), 17)
+	assert.Equal(t, cs[1].Line(), 18)
 	assert.Equal(t, cs[1].Pkg(), "failure_test")
 }
 
@@ -45,12 +45,12 @@ func TestCallStackFromPkgErrors(t *testing.T) {
 
 	assert.Contains(t, cs[0].Path(), "github.com/morikuni/failure/callstack_test.go")
 	assert.Equal(t, cs[0].Func(), "Y")
-	assert.Equal(t, cs[0].Line(), 31)
+	assert.Equal(t, cs[0].Line(), 32)
 	assert.Equal(t, cs[0].Pkg(), "failure_test")
 
 	assert.Contains(t, cs[1].Path(), "github.com/morikuni/failure/callstack_test.go")
 	assert.Equal(t, cs[1].Func(), "TestCallStackFromPkgErrors")
-	assert.Equal(t, cs[1].Line(), 39)
+	assert.Equal(t, cs[1].Line(), 40)
 	assert.Equal(t, cs[1].Pkg(), "failure_test")
 }
 
