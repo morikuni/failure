@@ -13,23 +13,23 @@ The package provides an error type below.
 ```go
 // Failure is an error representing failure of something.
 type Failure struct {
-	// Code is a error code to handle the error in your source code.
+	// Code is an error code to handle the error in your source code.
 	Code Code
-	// Message is a error message for the application user.
-	// So the message should be human-readable and should be helpful.
+	// Message is an error message for the application user.
+	// So the message should be human-readable and be helpful.
 	Message string
-	// CallStack is a call stack at the time of the error occurs.
+	// CallStack is a call stack at the time of the error occurred.
 	CallStack CallStack
-	// Info is information on why the error occurred.
+	// Info is optional information on why the error occurred.
 	Info Info
-	// Underlying is a underlying error.
+	// Underlying is an underlying error of the failure.
 	Underlying error
 }
 ```
 
 ## Example
 
-The failure works with error codes you defined for your application.
+The failure works with error codes you defined in your application.
 
 ```go
 package main
