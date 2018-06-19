@@ -111,7 +111,7 @@ func (f Failure) Format(s fmt.State, verb rune) {
 	}
 }
 
-// Cause implements github.com/pkg/errors.causer.
+// Cause returns the underlying error.
 func (f Failure) Cause() error {
 	return f.Underlying
 }
@@ -230,4 +230,25 @@ func InfoListOf(err error) []Info {
 		}
 	}
 	return nil
+}
+
+// Cause returns an underlying error of the error.
+func Cause(err error) error {
+	type causer interface {
+		Cause() error
+	}
+
+	for err != nil {
+		c, ok := err.(causer)
+		if !ok {
+			break
+		}
+		e := c.Cause()
+		if e == nil {
+			break
+		}
+		err = e
+	}
+
+	return err
 }
