@@ -6,7 +6,7 @@
 [![codecov](https://codecov.io/gh/morikuni/failure/branch/master/graph/badge.svg)](https://codecov.io/gh/morikuni/failure)
 
 failure is a utility package for handling application errors.
-It is inspired by https://middlemost.com/failure-is-your-domain and github.com/pkg/errors.
+It is inspired by [https://middlemost.com/failure-is-your-domain](https://middlemost.com/failure-is-your-domain) and [github.com/pkg/errors](https://github.com/pkg/errors).
 
 The package provides an error type below.
 
