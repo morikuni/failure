@@ -178,11 +178,11 @@ func TestFailure_Format(t *testing.T) {
 	}
 }
 
-func TestCause(t *testing.T) {
+func TestCauseOf(t *testing.T) {
 	f := failure.New(TestCodeB)
-	assert.Equal(t, f, failure.Cause(f))
+	assert.Equal(t, f, failure.CauseOf(f))
 
 	base := failure.New(TestCodeA)
 	pkgErr := errors.Wrap(base, "aaa")
-	assert.Equal(t, base, failure.Cause(failure.Wrap(pkgErr)))
+	assert.Equal(t, base, failure.CauseOf(failure.Wrap(pkgErr)))
 }
