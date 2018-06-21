@@ -102,14 +102,19 @@ func HandleError(w http.ResponseWriter, err error) {
 	// GetProject(forbidden): GetACL(not_found)
 	fmt.Printf("%+v\n", err)
 	// GetProject(forbidden): GetACL(not_found)
-	//   [GetACL] /go/src/github.com/morikuni/failure/example/main.go:21
-	//   [GetProject] /go/src/github.com/morikuni/failure/example/main.go:31
-	//   [Handler] /go/src/github.com/morikuni/failure/example/main.go:46
-	//   [HandlerFunc.ServeHTTP] /usr/local/go/src/net/http/server.go:1918
-	//   [(*ServeMux).ServeHTTP] /usr/local/go/src/net/http/server.go:2254
-	//   [serverHandler.ServeHTTP] /usr/local/go/src/net/http/server.go:2619
-	//   [(*conn).serve] /usr/local/go/src/net/http/server.go:1801
-	//   [goexit] /usr/local/go/src/runtime/asm_amd64.s:2337
+	//   Info:
+	//     additionalInfo = hello
+	//     projectID = 123
+	//     userID = 456
+	//   CallStack:
+	//     [GetACL] /go/src/github.com/morikuni/failure/example/main.go:21
+	//     [GetProject] /go/src/github.com/morikuni/failure/example/main.go:31
+	//     [Handler] /go/src/github.com/morikuni/failure/example/main.go:46
+	//     [HandlerFunc.ServeHTTP] /usr/local/go/src/net/http/server.go:1918
+	//     [(*ServeMux).ServeHTTP] /usr/local/go/src/net/http/server.go:2254
+	//     [serverHandler.ServeHTTP] /usr/local/go/src/net/http/server.go:2619
+	//     [(*conn).serve] /usr/local/go/src/net/http/server.go:1801
+	//     [goexit] /usr/local/go/src/runtime/asm_amd64.s:2337
 	fmt.Println(failure.CodeOf(err))
 	// forbidden
 	fmt.Println(failure.MessageOf(err))
@@ -118,6 +123,8 @@ func HandleError(w http.ResponseWriter, err error) {
 	// [map[additionalInfo:hello] map[projectID:123 userID:456]]
 	fmt.Println(failure.CallStackOf(err))
 	// GetACL: GetProject: Handler: HandlerFunc.ServeHTTP: (*ServeMux).ServeHTTP: serverHandler.ServeHTTP: (*conn).serve: goexit
+	fmt.Println(failure.CauseOf(err))
+	// GetACL(not_found)
 }
 
 func main() {
