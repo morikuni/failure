@@ -15,7 +15,7 @@ var (
 	DefaultMessage = "An internal error has occurred. Please try it later or contact the developer."
 
 	// Unknown represents unknown error code.
-	Unknown Code = "unknown"
+	Unknown Code = StringCode("unknown")
 )
 
 // Info is key-value data.
@@ -56,13 +56,13 @@ func (f Failure) Error() string {
 		buf.WriteString(f.CallStack[0].Func())
 	}
 
-	if f.Code != "" {
+	if f.Code != nil {
 		if buf.Len() != 0 {
 			buf.WriteRune('(')
-			buf.WriteString(string(f.Code))
+			buf.WriteString(string(f.Code.ErrorCode()))
 			buf.WriteRune(')')
 		} else {
-			buf.WriteString(string(f.Code))
+			buf.WriteString(string(f.Code.ErrorCode()))
 		}
 	}
 
@@ -142,7 +142,7 @@ func Translate(err error, code Code) Failure {
 // Wrap wraps the error.
 func Wrap(err error) Failure {
 	return Failure{
-		"",
+		nil,
 		"",
 		Callers(1),
 		nil,
@@ -150,19 +150,15 @@ func Wrap(err error) Failure {
 	}
 }
 
-// Code represents an error code.
-// Define your application errors with this type.
-type Code string
-
 // CodeOf extracts Code from the error.
 // If the error does not contain any code, Unknown is returned.
 func CodeOf(err error) Code {
 	if err == nil {
-		return ""
+		return nil
 	}
 
 	if f, ok := err.(Failure); ok {
-		if f.Code != "" {
+		if f.Code != nil {
 			return f.Code
 		}
 		if f.Underlying != nil {
