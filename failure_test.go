@@ -12,8 +12,8 @@ import (
 )
 
 const (
-	TestCodeA failure.Code = "code_a"
-	TestCodeB failure.Code = "code_b"
+	TestCodeA failure.StringCode = "code_a"
+	TestCodeB failure.IntCode    = 1
 )
 
 func TestFailure(t *testing.T) {
@@ -52,7 +52,7 @@ func TestFailure(t *testing.T) {
 				"xxx",
 				[]failure.Info{{"zzz": true}},
 				35,
-				"TestFailure(code_b): TestFailure(code_a)",
+				"TestFailure(1): TestFailure(code_a)",
 			},
 		},
 		"overwrite": {
@@ -62,7 +62,7 @@ func TestFailure(t *testing.T) {
 				"aaa",
 				[]failure.Info{{"bbb": 1}, {"zzz": true}},
 				35,
-				"TestFailure(code_b): TestFailure(code_a)",
+				"TestFailure(1): TestFailure(code_a)",
 			},
 		},
 		"wrap": {
@@ -82,13 +82,13 @@ func TestFailure(t *testing.T) {
 				"aaa",
 				nil,
 				36,
-				"TestFailure(code_b): yyy",
+				"TestFailure(1): yyy",
 			},
 		},
 		"nil": {
 			Input{nil},
 			Expect{
-				"",
+				nil,
 				"",
 				nil,
 				0,
@@ -166,7 +166,7 @@ func TestFailure_Format(t *testing.T) {
 				"%#v",
 			},
 			Expect{
-				`failure.Failure{Code:"", Message:"hello", CallStack:\[\]failure.PC{.*}, Info:failure.Info\(nil\), Underlying:failure.Failure{.*}}`,
+				`failure.Failure{Code:failure.Code\(nil\), Message:"hello", CallStack:\[\]failure.PC{.*}, Info:failure.Info\(nil\), Underlying:failure.Failure{.*}}`,
 			},
 		},
 	}
