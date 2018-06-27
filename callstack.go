@@ -10,10 +10,8 @@ import (
 	"github.com/pkg/errors"
 )
 
-// some code is copied from github.com/pkg/errors.
-
 // CallStack represents call stack.
-type CallStack []PC
+type CallStack []Frame
 
 // Format implements fmt.Formatter.
 func (cs CallStack) Format(s fmt.State, verb rune) {
@@ -25,7 +23,7 @@ func (cs CallStack) Format(s fmt.State, verb rune) {
 				fmt.Fprintf(s, "%+v\n", pc)
 			}
 		case s.Flag('#'):
-			fmt.Fprintf(s, "%#v", []PC(cs))
+			fmt.Fprintf(s, "%#v", []Frame(cs))
 		default:
 			l := len(cs)
 			if l == 0 {
@@ -43,13 +41,23 @@ func (cs CallStack) Format(s fmt.State, verb rune) {
 
 // Callers returns call stack for the current state.
 func Callers(skip int) CallStack {
-	const depth = 32
-	var pcs [depth]uintptr
+	var pcs [32]uintptr
 	n := runtime.Callers(skip+2, pcs[:])
+	if n == 0 {
+		return nil
+	}
 
-	cs := make(CallStack, n)
-	for i, pc := range pcs[:n] {
-		cs[i] = PC(pc)
+	fs := runtime.CallersFrames(pcs[:n])
+
+	cs := make(CallStack, 0, n)
+	for {
+		f, more := fs.Next()
+
+		cs = append(cs, frame{f.File, f.Line, f.Function})
+
+		if !more {
+			break
+		}
 	}
 
 	return cs
@@ -57,55 +65,59 @@ func Callers(skip int) CallStack {
 
 // CallStackFromPkgErrors creates CallStack from errors.StackTrace.
 func CallStackFromPkgErrors(st errors.StackTrace) CallStack {
-	cs := make(CallStack, len(st))
-	for i, f := range st {
-		cs[i] = PC(f)
+	pcs := make([]uintptr, len(st))
+	for i, v := range st {
+		pcs[i] = uintptr(v)
+	}
+
+	fs := runtime.CallersFrames(pcs)
+
+	cs := make(CallStack, 0, len(pcs))
+	for {
+		f, more := fs.Next()
+
+		cs = append(cs, frame{f.File, f.Line, f.Function})
+
+		if !more {
+			break
+		}
 	}
 	return cs
 }
 
-// PC represents program counter.
-type PC uintptr
+type Frame interface {
+	Path() string
+	File() string
+	Line() int
+	Func() string
+	Pkg() string
+}
 
-func (pc PC) pc() uintptr {
-	// Copied from github.com/pkg/errors.Frame
-	// I don't know why add -1 here.
-	// If remove this, some test fails.
-	return uintptr(pc) - 1
+// PC represents program counter.
+type frame struct {
+	file     string
+	line     int
+	function string
 }
 
 // Path returns a full path to the file for pc.
-func (pc PC) Path() string {
-	fn := runtime.FuncForPC(pc.pc())
-	if fn == nil {
-		return "???"
-	}
-	file, _ := fn.FileLine(pc.pc())
-	return file
+func (f frame) Path() string {
+	return f.file
 }
 
 // File returns a file name for pc.
-func (pc PC) File() string {
-	return filepath.Base(pc.Path())
+func (f frame) File() string {
+	return filepath.Base(f.file)
 }
 
 // Line returns a line number for pc.
-func (pc PC) Line() int {
-	fn := runtime.FuncForPC(pc.pc())
-	if fn == nil {
-		return 0
-	}
-	_, line := fn.FileLine(pc.pc())
-	return line
+func (f frame) Line() int {
+	return f.line
 }
 
 // Func returns a function name for pc.
-func (pc PC) Func() string {
-	fn := runtime.FuncForPC(pc.pc())
-	if fn == nil {
-		return ""
-	}
-	fs := strings.Split(path.Base(fn.Name()), ".")
+func (f frame) Func() string {
+	fs := strings.Split(path.Base(f.function), ".")
 	if len(fs) >= 1 {
 		return strings.Join(fs[1:], ".")
 	}
@@ -113,24 +125,20 @@ func (pc PC) Func() string {
 }
 
 // Pkg returns a package name for pc.
-func (pc PC) Pkg() string {
-	fn := runtime.FuncForPC(pc.pc())
-	if fn == nil {
-		return ""
-	}
-	fs := strings.Split(path.Base(fn.Name()), ".")
+func (f frame) Pkg() string {
+	fs := strings.Split(path.Base(f.function), ".")
 	return fs[0]
 }
 
 // Format implements fmt.Formatter.
-func (pc PC) Format(s fmt.State, verb rune) {
+func (f frame) Format(s fmt.State, verb rune) {
 	switch verb {
 	case 'v':
 		if s.Flag('+') {
-			fmt.Fprintf(s, "[%s] ", pc.Func())
+			fmt.Fprintf(s, "[%s] ", f.Func())
 		}
 		fallthrough
 	case 's':
-		fmt.Fprintf(s, "%s:%d", pc.Path(), pc.Line())
+		fmt.Fprintf(s, "%s:%d", f.Path(), f.Line())
 	}
 }

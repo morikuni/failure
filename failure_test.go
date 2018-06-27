@@ -166,7 +166,7 @@ func TestFailure_Format(t *testing.T) {
 				"%#v",
 			},
 			Expect{
-				`failure.Failure{Code:failure.Code\(nil\), Message:"hello", CallStack:\[\]failure.PC{.*}, Info:failure.Info\(nil\), Underlying:failure.Failure{.*}}`,
+				`failure.Failure{Code:failure.Code\(nil\), Message:"hello", CallStack:\[\]failure.Frame{.*}, Info:failure.Info\(nil\), Underlying:failure.Failure{.*}}`,
 			},
 		},
 	}
