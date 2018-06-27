@@ -70,7 +70,7 @@ func TestFormat(t *testing.T) {
 		fmt.Sprintf("%s", cs),
 	)
 	assert.Regexp(t,
-		`\[\]failure.PC{/.+/github.com/morikuni/failure/callstack_test.go:14, /.+/github.com/morikuni/failure/callstack_test.go:62}`,
+		`\[\]failure.Frame{/.+/github.com/morikuni/failure/callstack_test.go:14, /.+/github.com/morikuni/failure/callstack_test.go:62}`,
 		fmt.Sprintf("%#v", cs),
 	)
 	assert.Regexp(t,
