@@ -111,9 +111,10 @@ func TestFailure(t *testing.T) {
 
 			cs := failure.CallStackOf(test.Input.Err)
 			if test.Expect.StackLine != 0 {
-				require.NotEmpty(t, cs)
-				if !assert.Equal(t, test.Expect.StackLine, cs[0].Line()) {
-					t.Log(cs[0])
+				fs := cs.Frames()
+				require.NotEmpty(t, fs)
+				if !assert.Equal(t, test.Expect.StackLine, fs[0].Line()) {
+					t.Log(fs[0])
 				}
 			} else {
 				assert.Nil(t, cs)
@@ -156,7 +157,7 @@ func TestFailure_Format(t *testing.T) {
   Info:
     zzz = true
   CallStack:
-    \[TestFailure_Format\] /.*/github.com/morikuni/failure/failure_test.go:138
+    \[TestFailure_Format\] /.*/github.com/morikuni/failure/failure_test.go:139
     \[.*`,
 			},
 		},
@@ -185,4 +186,10 @@ func TestCauseOf(t *testing.T) {
 	base := failure.New(TestCodeA)
 	pkgErr := errors.Wrap(base, "aaa")
 	assert.Equal(t, base, failure.CauseOf(failure.Wrap(pkgErr)))
+}
+
+func BenchmarkFailure(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		failure.Wrap(failure.Translate(failure.New(failure.StringCode("error")), failure.StringCode("failure")))
+	}
 }

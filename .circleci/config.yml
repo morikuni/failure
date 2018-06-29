@@ -20,7 +20,7 @@ jobs:
           command: make test
       - run:
           name: coverage
-          command: go test -coverpkg=. -covermode=atomic -coverprofile=coverage.txt
+          command: make cover
       - run:
           name: upload coverage
           command: bash <(curl -s https://codecov.io/bash)

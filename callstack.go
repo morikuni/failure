@@ -10,29 +10,68 @@ import (
 	"github.com/pkg/errors"
 )
 
-// CallStack represents call stack.
-type CallStack []Frame
+// CallStack represents a call stack.
+type CallStack interface {
+	// HeadFrame returns a Frame of the where call stack is created.
+	HeadFrame() Frame
+	// Frames returns frames of the call stack.
+	Frames() []Frame
+}
 
-// Format implements fmt.Formatter.
-func (cs CallStack) Format(s fmt.State, verb rune) {
+type callStack struct {
+	pcs []uintptr
+}
+
+func (cs callStack) HeadFrame() Frame {
+	if len(cs.pcs) == 0 {
+		return emptyFrame
+	}
+
+	rfs := runtime.CallersFrames(cs.pcs[:1])
+	f, _ := rfs.Next()
+	return frame{f.File, f.Line, f.Function}
+}
+
+func (cs callStack) Frames() []Frame {
+	if len(cs.pcs) == 0 {
+		return nil
+	}
+
+	rfs := runtime.CallersFrames(cs.pcs)
+
+	fs := make([]Frame, 0, len(cs.pcs))
+	for {
+		f, more := rfs.Next()
+
+		fs = append(fs, frame{f.File, f.Line, f.Function})
+
+		if !more {
+			break
+		}
+	}
+	return fs
+}
+
+func (cs callStack) Format(s fmt.State, verb rune) {
 	switch verb {
 	case 'v':
 		switch {
 		case s.Flag('+'):
-			for _, pc := range cs {
-				fmt.Fprintf(s, "%+v\n", pc)
+			for _, f := range cs.Frames() {
+				fmt.Fprintf(s, "%+v\n", f)
 			}
 		case s.Flag('#'):
-			fmt.Fprintf(s, "%#v", []Frame(cs))
+			fmt.Fprintf(s, "%#v", cs.Frames())
 		default:
-			l := len(cs)
+			fs := cs.Frames()
+			l := len(fs)
 			if l == 0 {
 				return
 			}
-			for _, pc := range cs[:l-1] {
-				fmt.Fprintf(s, "%s: ", pc.Func())
+			for _, f := range fs[:l-1] {
+				fmt.Fprintf(s, "%s: ", f.Func())
 			}
-			fmt.Fprintf(s, "%v", cs[l-1].Func())
+			fmt.Fprintf(s, "%v", fs[l-1].Func())
 		}
 	case 's':
 		fmt.Fprintf(s, "%v", cs)
@@ -47,20 +86,7 @@ func Callers(skip int) CallStack {
 		return nil
 	}
 
-	fs := runtime.CallersFrames(pcs[:n])
-
-	cs := make(CallStack, 0, n)
-	for {
-		f, more := fs.Next()
-
-		cs = append(cs, frame{f.File, f.Line, f.Function})
-
-		if !more {
-			break
-		}
-	}
-
-	return cs
+	return callStack{pcs[:n]}
 }
 
 // CallStackFromPkgErrors creates CallStack from errors.StackTrace.
@@ -70,52 +96,43 @@ func CallStackFromPkgErrors(st errors.StackTrace) CallStack {
 		pcs[i] = uintptr(v)
 	}
 
-	fs := runtime.CallersFrames(pcs)
-
-	cs := make(CallStack, 0, len(pcs))
-	for {
-		f, more := fs.Next()
-
-		cs = append(cs, frame{f.File, f.Line, f.Function})
-
-		if !more {
-			break
-		}
-	}
-	return cs
+	return callStack{[]uintptr(pcs)}
 }
 
+// Frame represents a stack frame.
 type Frame interface {
+	// Path returns a full path to the file.
 	Path() string
+	// File returns a file name.
 	File() string
+	// Line returns a line number in the file.
 	Line() int
+	// Func returns a function name.
 	Func() string
+	// Pkg returns a package name of the function.
 	Pkg() string
 }
 
-// PC represents program counter.
+var emptyFrame = frame{"???", 0, "???"}
+
 type frame struct {
 	file     string
 	line     int
 	function string
 }
 
-// Path returns a full path to the file for pc.
 func (f frame) Path() string {
 	return f.file
 }
 
-// File returns a file name for pc.
 func (f frame) File() string {
 	return filepath.Base(f.file)
 }
 
-// Line returns a line number for pc.
 func (f frame) Line() int {
 	return f.line
 }
 
-// Func returns a function name for pc.
 func (f frame) Func() string {
 	fs := strings.Split(path.Base(f.function), ".")
 	if len(fs) >= 1 {
@@ -124,13 +141,11 @@ func (f frame) Func() string {
 	return fs[0]
 }
 
-// Pkg returns a package name for pc.
 func (f frame) Pkg() string {
 	fs := strings.Split(path.Base(f.function), ".")
 	return fs[0]
 }
 
-// Format implements fmt.Formatter.
 func (f frame) Format(s fmt.State, verb rune) {
 	switch verb {
 	case 'v':

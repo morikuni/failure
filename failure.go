@@ -52,8 +52,8 @@ func (f Failure) WithInfo(info Info) Failure {
 func (f Failure) Error() string {
 	buf := &bytes.Buffer{}
 
-	if len(f.CallStack) != 0 {
-		buf.WriteString(f.CallStack[0].Func())
+	if f.CallStack != nil {
+		buf.WriteString(f.CallStack.HeadFrame().Func())
 	}
 
 	if f.Code != nil {
@@ -89,8 +89,8 @@ func (f Failure) Format(s fmt.State, verb rune) {
 				}
 			}
 			fmt.Fprint(s, "  CallStack:\n")
-			for _, pc := range CallStackOf(f) {
-				fmt.Fprintf(s, "    %+v\n", pc)
+			for _, f := range CallStackOf(f).Frames() {
+				fmt.Fprintf(s, "    %+v\n", f)
 			}
 		case s.Flag('#'):
 			// Re-define struct to remove Format method.
