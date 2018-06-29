@@ -58,15 +58,15 @@ func TestCallStackFromPkgErrors(t *testing.T) {
 	assert.Equal(t, fs[1].Pkg(), "failure_test")
 }
 
-func TestFormat(t *testing.T) {
+func TestCallStack_Format(t *testing.T) {
 	cs := X()
 
 	assert.Regexp(t,
-		`X: TestFormat: .*`,
+		`X: TestCallStack_Format: .*`,
 		fmt.Sprintf("%v", cs),
 	)
 	assert.Regexp(t,
-		`X: TestFormat: .*`,
+		`X: TestCallStack_Format: .*`,
 		fmt.Sprintf("%s", cs),
 	)
 	assert.Regexp(t,
@@ -75,12 +75,14 @@ func TestFormat(t *testing.T) {
 	)
 	assert.Regexp(t,
 		`\[X\] /.+/github.com/morikuni/failure/callstack_test.go:14
-\[TestFormat\] /.+/github.com/morikuni/failure/callstack_test.go:62
+\[TestCallStack_Format\] /.+/github.com/morikuni/failure/callstack_test.go:62
 \[.*`,
 		fmt.Sprintf("%+v", cs),
 	)
+}
 
-	f := cs.Frames()[0]
+func TestFrame_Format(t *testing.T) {
+	f := X().HeadFrame()
 
 	assert.Regexp(t,
 		`/.+/github.com/morikuni/failure/callstack_test.go:14`,
@@ -98,4 +100,33 @@ func TestFormat(t *testing.T) {
 		`\[X\] /.+/github.com/morikuni/failure/callstack_test.go:14`,
 		fmt.Sprintf("%+v", f),
 	)
+}
+
+func TestCallStack_Frames(t *testing.T) {
+	cs := X()
+	fs := cs.Frames()
+
+	assert.Equal(t, cs.Frames(), fs)
+
+	assert.Equal(t, 14, fs[0].Line())
+	assert.Equal(t, "X", fs[0].Func())
+
+	assert.Equal(t, 106, fs[1].Line())
+	assert.Equal(t, "TestCallStack_Frames", fs[1].Func())
+}
+
+func TestCallStack_HeadFrame(t *testing.T) {
+	cs := X()
+
+	assert.Equal(t, cs.Frames()[0], cs.HeadFrame())
+}
+
+func TestFrame(t *testing.T) {
+	f := X().HeadFrame()
+
+	assert.Equal(t, "X", f.Func())
+	assert.Equal(t, 14, f.Line())
+	assert.Equal(t, "callstack_test.go", f.File())
+	assert.Contains(t, f.Path(), "github.com/morikuni/failure/callstack_test.go")
+	assert.Equal(t, "failure_test", f.Pkg())
 }
