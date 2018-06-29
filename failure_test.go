@@ -187,3 +187,9 @@ func TestCauseOf(t *testing.T) {
 	pkgErr := errors.Wrap(base, "aaa")
 	assert.Equal(t, base, failure.CauseOf(failure.Wrap(pkgErr)))
 }
+
+func BenchmarkFailure(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		failure.Wrap(failure.Translate(failure.New(failure.StringCode("error")), failure.StringCode("failure")))
+	}
+}
