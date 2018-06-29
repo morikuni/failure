@@ -10,9 +10,11 @@ import (
 	"github.com/pkg/errors"
 )
 
-// CallStack represents call stack.
+// CallStack represents a call stack.
 type CallStack interface {
+	// HeadFrame returns a Frame of the where call stack is created.
 	HeadFrame() Frame
+	// Frames returns frames of the call stack.
 	Frames() []Frame
 }
 
@@ -50,7 +52,6 @@ func (cs callStack) Frames() []Frame {
 	return fs
 }
 
-// Format implements fmt.Formatter.
 func (cs callStack) Format(s fmt.State, verb rune) {
 	switch verb {
 	case 'v':
@@ -98,11 +99,17 @@ func CallStackFromPkgErrors(st errors.StackTrace) CallStack {
 	return callStack{[]uintptr(pcs)}
 }
 
+// Frame represents a stack frame.
 type Frame interface {
+	// Path returns a full path to the file.
 	Path() string
+	// File returns a file name.
 	File() string
+	// Line returns a line number in the file.
 	Line() int
+	// Func returns a function name.
 	Func() string
+	// Pkg returns a package name of the function.
 	Pkg() string
 }
 
@@ -114,22 +121,18 @@ type frame struct {
 	function string
 }
 
-// Path returns a full path to the file for pc.
 func (f frame) Path() string {
 	return f.file
 }
 
-// File returns a file name for pc.
 func (f frame) File() string {
 	return filepath.Base(f.file)
 }
 
-// Line returns a line number for pc.
 func (f frame) Line() int {
 	return f.line
 }
 
-// Func returns a function name for pc.
 func (f frame) Func() string {
 	fs := strings.Split(path.Base(f.function), ".")
 	if len(fs) >= 1 {
@@ -138,13 +141,11 @@ func (f frame) Func() string {
 	return fs[0]
 }
 
-// Pkg returns a package name for pc.
 func (f frame) Pkg() string {
 	fs := strings.Split(path.Base(f.function), ".")
 	return fs[0]
 }
 
-// Format implements fmt.Formatter.
 func (f frame) Format(s fmt.State, verb rune) {
 	switch verb {
 	case 'v':
