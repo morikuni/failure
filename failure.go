@@ -5,7 +5,6 @@ package failure
 import (
 	"bytes"
 	"fmt"
-	"io"
 
 	"github.com/pkg/errors"
 )
@@ -23,61 +22,61 @@ type Info map[string]interface{}
 
 // Failure is an error representing failure of something.
 type Failure struct {
-	// Code is an error code to handle the error in your source code.
-	Code Code
-	// Message is an error message for the application user.
+	// code is an error code to handle the error in your source code.
+	code Code
+	// message is an error message for the application user.
 	// So the message should be human-readable and be helpful.
-	Message string
-	// CallStack is a call stack at the time of the error occurred.
-	CallStack CallStack
+	message string
+	// callStack is a call stack at the time of the error occurred.
+	callStack CallStack
 	// Info is optional information on why the error occurred.
-	Info Info
+	info Info
 	// Underlying is an underlying error of the failure.
-	Underlying error
+	underlying error
 }
 
 // WithMessage attaches a message to the failure.
-func (f Failure) WithMessage(message string) Failure {
-	f.Message = message
+func (f *Failure) WithMessage(message string) *Failure {
+	f.message = message
 	return f
 }
 
 // WithInfo attaches information to the failure.
-func (f Failure) WithInfo(info Info) Failure {
-	f.Info = info
+func (f *Failure) WithInfo(info Info) *Failure {
+	f.info = info
 	return f
 }
 
 // Failure implements error.
-func (f Failure) Error() string {
+func (f *Failure) Error() string {
 	buf := &bytes.Buffer{}
 
-	if f.CallStack != nil {
-		buf.WriteString(f.CallStack.HeadFrame().Func())
+	if f.callStack != nil {
+		buf.WriteString(f.callStack.HeadFrame().Func())
 	}
 
-	if f.Code != nil {
+	if f.code != nil {
 		if buf.Len() != 0 {
 			buf.WriteRune('(')
-			buf.WriteString(string(f.Code.ErrorCode()))
+			buf.WriteString(f.code.ErrorCode())
 			buf.WriteRune(')')
 		} else {
-			buf.WriteString(string(f.Code.ErrorCode()))
+			buf.WriteString(f.code.ErrorCode())
 		}
 	}
 
-	if f.Underlying != nil {
+	if f.underlying != nil {
 		if buf.Len() != 0 {
 			buf.WriteString(": ")
 		}
-		buf.WriteString(f.Underlying.Error())
+		buf.WriteString(f.underlying.Error())
 	}
 
 	return buf.String()
 }
 
 // Format implements fmt.Formatter.
-func (f Failure) Format(s fmt.State, verb rune) {
+func (f *Failure) Format(s fmt.State, verb rune) {
 	switch verb {
 	case 'v':
 		switch {
@@ -96,15 +95,15 @@ func (f Failure) Format(s fmt.State, verb rune) {
 			// Re-define struct to remove Format method.
 			// Prevent recursive call.
 			type Failure struct {
-				Code       Code
-				Message    string
-				CallStack  CallStack
-				Info       Info
-				Underlying error
+				code       Code
+				message    string
+				callStack  CallStack
+				info       Info
+				underlying error
 			}
-			fmt.Fprintf(s, "%#v", Failure(f))
+			fmt.Fprintf(s, "%#v", Failure(*f))
 		default:
-			io.WriteString(s, f.Error())
+			s.Write([]byte(f.Error()))
 		}
 	case 's':
 		fmt.Fprintf(s, "%v", f)
@@ -113,40 +112,40 @@ func (f Failure) Format(s fmt.State, verb rune) {
 
 // Cause returns the underlying error.
 // Use the Cause function instead of calling this method directly.
-func (f Failure) Cause() error {
-	return f.Underlying
+func (f *Failure) Cause() error {
+	return f.underlying
 }
 
 // New returns an application error.
-func New(code Code) Failure {
-	return Failure{
-		code,
-		"",
-		Callers(1),
-		nil,
-		nil,
+func New(code Code) *Failure {
+	return &Failure{
+		code:       code,
+		message:    "",
+		callStack:  Callers(1),
+		info:       nil,
+		underlying: nil,
 	}
 }
 
 // Translate translates the error to an application error.
-func Translate(err error, code Code) Failure {
-	return Failure{
-		code,
-		"",
-		Callers(1),
-		nil,
-		err,
+func Translate(err error, code Code) *Failure {
+	return &Failure{
+		code:       code,
+		message:    "",
+		callStack:  Callers(1),
+		info:       nil,
+		underlying: err,
 	}
 }
 
 // Wrap wraps the error.
-func Wrap(err error) Failure {
-	return Failure{
-		nil,
-		"",
-		Callers(1),
-		nil,
-		err,
+func Wrap(err error) *Failure {
+	return &Failure{
+		code:       nil,
+		message:    "",
+		callStack:  Callers(1),
+		info:       nil,
+		underlying: err,
 	}
 }
 
@@ -157,12 +156,12 @@ func CodeOf(err error) Code {
 		return nil
 	}
 
-	if f, ok := err.(Failure); ok {
-		if f.Code != nil {
-			return f.Code
+	if f, ok := err.(*Failure); ok {
+		if f.code != nil {
+			return f.code
 		}
-		if f.Underlying != nil {
-			return CodeOf(f.Underlying)
+		if f.underlying != nil {
+			return CodeOf(f.underlying)
 		}
 	}
 	return Unknown
@@ -175,12 +174,12 @@ func MessageOf(err error) string {
 		return ""
 	}
 
-	if f, ok := err.(Failure); ok {
-		if f.Message != "" {
-			return f.Message
+	if f, ok := err.(*Failure); ok {
+		if f.message != "" {
+			return f.message
 		}
-		if f.Underlying != nil {
-			return MessageOf(f.Underlying)
+		if f.underlying != nil {
+			return MessageOf(f.underlying)
 		}
 	}
 	return DefaultMessage
@@ -198,13 +197,13 @@ func CallStackOf(err error) CallStack {
 	}
 
 	switch e := err.(type) {
-	case Failure:
-		if e.Underlying != nil {
-			if cs := CallStackOf(e.Underlying); cs != nil {
+	case *Failure:
+		if e.underlying != nil {
+			if cs := CallStackOf(e.underlying); cs != nil {
 				return cs
 			}
 		}
-		return e.CallStack
+		return e.callStack
 	case stackTracer:
 		return CallStackFromPkgErrors(e.StackTrace())
 	}
@@ -218,12 +217,12 @@ func InfoListOf(err error) []Info {
 		return nil
 	}
 
-	if f, ok := err.(Failure); ok {
-		if f.Info != nil {
-			return append([]Info{f.Info}, InfoListOf(f.Underlying)...)
+	if f, ok := err.(*Failure); ok {
+		if f.info != nil {
+			return append([]Info{f.info}, InfoListOf(f.underlying)...)
 		}
-		if f.Underlying != nil {
-			return InfoListOf(f.Underlying)
+		if f.underlying != nil {
+			return InfoListOf(f.underlying)
 		}
 	}
 	return nil
