@@ -22,14 +22,14 @@ type callStack struct {
 	pcs []uintptr
 }
 
-func (cs callStack) HeadFrame() Frame {
+func (cs *callStack) HeadFrame() Frame {
 	if len(cs.pcs) == 0 {
 		return emptyFrame
 	}
 
 	rfs := runtime.CallersFrames(cs.pcs[:1])
 	f, _ := rfs.Next()
-	return frame{f.File, f.Line, f.Function}
+	return &frame{f.File, f.Line, f.Function}
 }
 
 func (cs callStack) Frames() []Frame {
@@ -43,7 +43,7 @@ func (cs callStack) Frames() []Frame {
 	for {
 		f, more := rfs.Next()
 
-		fs = append(fs, frame{f.File, f.Line, f.Function})
+		fs = append(fs, &frame{f.File, f.Line, f.Function})
 
 		if !more {
 			break
@@ -52,7 +52,7 @@ func (cs callStack) Frames() []Frame {
 	return fs
 }
 
-func (cs callStack) Format(s fmt.State, verb rune) {
+func (cs *callStack) Format(s fmt.State, verb rune) {
 	switch verb {
 	case 'v':
 		switch {
@@ -86,7 +86,7 @@ func Callers(skip int) CallStack {
 		return nil
 	}
 
-	return callStack{pcs[:n]}
+	return &callStack{pcs[:n]}
 }
 
 // CallStackFromPkgErrors creates CallStack from errors.StackTrace.
@@ -96,7 +96,7 @@ func CallStackFromPkgErrors(st errors.StackTrace) CallStack {
 		pcs[i] = uintptr(v)
 	}
 
-	return callStack{[]uintptr(pcs)}
+	return &callStack{[]uintptr(pcs)}
 }
 
 // Frame represents a stack frame.
@@ -113,7 +113,7 @@ type Frame interface {
 	Pkg() string
 }
 
-var emptyFrame = frame{"???", 0, "???"}
+var emptyFrame = &frame{"???", 0, "???"}
 
 type frame struct {
 	file     string
@@ -121,19 +121,19 @@ type frame struct {
 	function string
 }
 
-func (f frame) Path() string {
+func (f *frame) Path() string {
 	return f.file
 }
 
-func (f frame) File() string {
+func (f *frame) File() string {
 	return filepath.Base(f.file)
 }
 
-func (f frame) Line() int {
+func (f *frame) Line() int {
 	return f.line
 }
 
-func (f frame) Func() string {
+func (f *frame) Func() string {
 	fs := strings.Split(path.Base(f.function), ".")
 	if len(fs) >= 1 {
 		return strings.Join(fs[1:], ".")
@@ -141,12 +141,12 @@ func (f frame) Func() string {
 	return fs[0]
 }
 
-func (f frame) Pkg() string {
+func (f *frame) Pkg() string {
 	fs := strings.Split(path.Base(f.function), ".")
 	return fs[0]
 }
 
-func (f frame) Format(s fmt.State, verb rune) {
+func (f *frame) Format(s fmt.State, verb rune) {
 	switch verb {
 	case 'v':
 		if s.Flag('+') {
