@@ -1,18 +1,29 @@
 package failure
 
 // Option represents an optional parameter of failure.
-type Option func(*Failure)
-
-// WithMessage adds a message to a failure.
-func WithMessage(msg string) Option {
-	return func(f *Failure) {
-		f.Message = msg
-	}
+type Option interface {
+	ApplyTo(*Failure)
 }
 
-// WithInfo adds info to a failure.
-func WithInfo(info Info) Option {
-	return func(f *Failure) {
-		f.Info = info
-	}
+// OptionFunc represents an option with function.
+type OptionFunc func(*Failure)
+
+// Apply implements the interface Option.
+func (of OptionFunc) ApplyTo(f *Failure) {
+	of(f)
+}
+
+// Message adds a message to a failure.
+func Message(msg string) Option {
+	return OptionFunc(func(f *Failure) {
+		f.Message = msg
+	})
+}
+
+// Info is key-value data.
+type Info map[string]interface{}
+
+// Apply implements the interface Option.
+func (i Info) ApplyTo(f *Failure) {
+	f.Info = i
 }
