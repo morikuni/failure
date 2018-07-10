@@ -18,9 +18,6 @@ var (
 	Unknown Code = StringCode("unknown")
 )
 
-// Info is key-value data.
-type Info map[string]interface{}
-
 // Failure is an error representing failure of something.
 type Failure struct {
 	// Code is an error code to handle the error in your source code.
@@ -131,7 +128,7 @@ func newFailure(err error, code Code, opts []Option) Failure {
 		err,
 	}
 	for _, o := range opts {
-		o(&f)
+		o.ApplyTo(&f)
 	}
 	return f
 }

@@ -53,7 +53,7 @@ func GetACL(projectID, userID string) (acl interface{}, e error) {
 	notFound := true
 	if notFound {
 		return nil, failure.New(NotFound,
-			failure.WithInfo(failure.Info{"projectID": projectID, "userID": userID}),
+			failure.Info{"projectID": projectID, "userID": userID},
 		)
 	}
 	err := errors.New("error")
@@ -69,8 +69,8 @@ func GetProject(projectID, userID string) (project interface{}, e error) {
 		switch failure.CodeOf(err) {
 		case NotFound:
 			return nil, failure.Translate(err, Forbidden,
-				failure.WithMessage("You have no grant to access the project."),
-				failure.WithInfo(failure.Info{"additionalInfo": "hello"}),
+				failure.Message("You have no grant to access the project."),
+				failure.Info{"additionalInfo": "hello"},
 			)
 		default:
 			return nil, err
