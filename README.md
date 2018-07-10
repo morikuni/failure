@@ -45,14 +45,16 @@ import (
 
 // error codes for your application.
 const (
-	NotFound  failure.Code = "not_found"
-	Forbidden failure.Code = "forbidden"
+	NotFound  failure.StringCode = "not_found"
+	Forbidden failure.StringCode = "forbidden"
 )
 
 func GetACL(projectID, userID string) (acl interface{}, e error) {
 	notFound := true
 	if notFound {
-		return nil, failure.New(NotFound).WithInfo(failure.Info{"projectID": projectID, "userID": userID})
+		return nil, failure.New(NotFound,
+			failure.WithInfo(failure.Info{"projectID": projectID, "userID": userID}),
+		)
 	}
 	err := errors.New("error")
 	if err != nil {
@@ -66,9 +68,10 @@ func GetProject(projectID, userID string) (project interface{}, e error) {
 	if err != nil {
 		switch failure.CodeOf(err) {
 		case NotFound:
-			return nil, failure.Translate(err, Forbidden).
-				WithMessage("You have no grant to access the project.").
-				WithInfo(failure.Info{"additionalInfo": "hello"})
+			return nil, failure.Translate(err, Forbidden,
+				failure.WithMessage("You have no grant to access the project."),
+				failure.WithInfo(failure.Info{"additionalInfo": "hello"}),
+			)
 		default:
 			return nil, err
 		}
@@ -108,8 +111,8 @@ func HandleError(w http.ResponseWriter, err error) {
 	//     userID = 456
 	//   CallStack:
 	//     [GetACL] /go/src/github.com/morikuni/failure/example/main.go:21
-	//     [GetProject] /go/src/github.com/morikuni/failure/example/main.go:31
-	//     [Handler] /go/src/github.com/morikuni/failure/example/main.go:46
+	//     [GetProject] /go/src/github.com/morikuni/failure/example/main.go:33
+	//     [Handler] /go/src/github.com/morikuni/failure/example/main.go:49
 	//     [HandlerFunc.ServeHTTP] /usr/local/go/src/net/http/server.go:1918
 	//     [(*ServeMux).ServeHTTP] /usr/local/go/src/net/http/server.go:2254
 	//     [serverHandler.ServeHTTP] /usr/local/go/src/net/http/server.go:2619
