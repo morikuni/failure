@@ -8,7 +8,7 @@ type Option interface {
 // OptionFunc represents an option with function.
 type OptionFunc func(*Failure)
 
-// Apply implements the interface Option.
+// ApplyTo implements the interface Option.
 func (of OptionFunc) ApplyTo(f *Failure) {
 	of(f)
 }
@@ -23,7 +23,7 @@ func Message(msg string) Option {
 // Info is key-value data.
 type Info map[string]interface{}
 
-// Apply implements the interface Option.
+// ApplyTo implements the interface Option.
 func (i Info) ApplyTo(f *Failure) {
 	f.Info = i
 }
