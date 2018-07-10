@@ -161,6 +161,18 @@ func TestFailure_Format(t *testing.T) {
     \[.*`,
 			},
 		},
+		"+v for empty": {
+			Input{
+				failure.Failure{},
+				"%+v",
+			},
+			Expect{
+				`
+  Info:
+  CallStack:
+`,
+			},
+		},
 		"#v": {
 			Input{
 				failure.Wrap(base, failure.WithMessage("hello")),

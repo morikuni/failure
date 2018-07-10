@@ -77,8 +77,10 @@ func (f Failure) Format(s fmt.State, verb rune) {
 				}
 			}
 			fmt.Fprint(s, "  CallStack:\n")
-			for _, f := range CallStackOf(f).Frames() {
-				fmt.Fprintf(s, "    %+v\n", f)
+			if cs := CallStackOf(f); cs != nil {
+				for _, f := range cs.Frames() {
+					fmt.Fprintf(s, "    %+v\n", f)
+				}
 			}
 		case s.Flag('#'):
 			// Re-define struct to remove Format method.
