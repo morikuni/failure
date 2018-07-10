@@ -32,11 +32,11 @@ func TestFailure(t *testing.T) {
 		Expect
 	}
 
-	base := failure.New(TestCodeA).WithMessage("xxx").WithInfo(failure.Info{"zzz": true})
+	base := failure.New(TestCodeA, failure.WithMessage("xxx"), failure.WithInfo(failure.Info{"zzz": true}))
 	pkgErr := errors.New("yyy")
 	tests := map[string]Test{
 		"new": {
-			Input{failure.New(TestCodeA).WithInfo(failure.Info{"aaa": 1})},
+			Input{failure.New(TestCodeA, failure.WithInfo(failure.Info{"aaa": 1}))},
 			Expect{
 				TestCodeA,
 				failure.DefaultMessage,
@@ -56,7 +56,7 @@ func TestFailure(t *testing.T) {
 			},
 		},
 		"overwrite": {
-			Input{failure.Translate(base, TestCodeB).WithMessage("aaa").WithInfo(failure.Info{"bbb": 1})},
+			Input{failure.Translate(base, TestCodeB, failure.WithMessage("aaa"), failure.WithInfo(failure.Info{"bbb": 1}))},
 			Expect{
 				TestCodeB,
 				"aaa",
@@ -76,7 +76,7 @@ func TestFailure(t *testing.T) {
 			},
 		},
 		"pkg/errors": {
-			Input{failure.Translate(pkgErr, TestCodeB).WithMessage("aaa")},
+			Input{failure.Translate(pkgErr, TestCodeB, failure.WithMessage("aaa"))},
 			Expect{
 				TestCodeB,
 				"aaa",
@@ -136,7 +136,7 @@ func TestFailure_Format(t *testing.T) {
 		Expect
 	}
 
-	base := failure.New(TestCodeA).WithMessage("xxx").WithInfo(failure.Info{"zzz": true})
+	base := failure.New(TestCodeA, failure.WithMessage("xxx"), failure.WithInfo(failure.Info{"zzz": true}))
 	tests := map[string]Test{
 		"v": {
 			Input{
@@ -163,7 +163,7 @@ func TestFailure_Format(t *testing.T) {
 		},
 		"#v": {
 			Input{
-				failure.Wrap(base).WithMessage("hello"),
+				failure.Wrap(base, failure.WithMessage("hello")),
 				"%#v",
 			},
 			Expect{

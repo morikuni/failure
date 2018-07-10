@@ -36,18 +36,6 @@ type Failure struct {
 	Underlying error
 }
 
-// WithMessage attaches a message to the failure.
-func (f Failure) WithMessage(message string) Failure {
-	f.Message = message
-	return f
-}
-
-// WithInfo attaches information to the failure.
-func (f Failure) WithInfo(info Info) Failure {
-	f.Info = info
-	return f
-}
-
 // Failure implements error.
 func (f Failure) Error() string {
 	buf := &bytes.Buffer{}
@@ -118,36 +106,32 @@ func (f Failure) Cause() error {
 }
 
 // New returns an application error.
-func New(code Code) Failure {
-	return Failure{
-		code,
-		"",
-		Callers(1),
-		nil,
-		nil,
-	}
+func New(code Code, opts ...Option) Failure {
+	return newFailure(nil, code, opts)
 }
 
 // Translate translates the error to an application error.
-func Translate(err error, code Code) Failure {
-	return Failure{
-		code,
-		"",
-		Callers(1),
-		nil,
-		err,
-	}
+func Translate(err error, code Code, opts ...Option) Failure {
+	return newFailure(err, code, opts)
 }
 
 // Wrap wraps the error.
-func Wrap(err error) Failure {
-	return Failure{
-		nil,
+func Wrap(err error, opts ...Option) Failure {
+	return newFailure(err, nil, opts)
+}
+
+func newFailure(err error, code Code, opts []Option) Failure {
+	f := Failure{
+		code,
 		"",
-		Callers(1),
+		Callers(2),
 		nil,
 		err,
 	}
+	for _, o := range opts {
+		o(&f)
+	}
+	return f
 }
 
 // CodeOf extracts Code from the error.
