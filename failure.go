@@ -105,17 +105,20 @@ func (f Failure) Cause() error {
 }
 
 // New returns an application error.
-func New(code Code, opts ...Option) Failure {
+func New(code Code, opts ...Option) error {
 	return newFailure(nil, code, opts)
 }
 
 // Translate translates the error to an application error.
-func Translate(err error, code Code, opts ...Option) Failure {
+func Translate(err error, code Code, opts ...Option) error {
 	return newFailure(err, code, opts)
 }
 
 // Wrap wraps the error.
-func Wrap(err error, opts ...Option) Failure {
+func Wrap(err error, opts ...Option) error {
+	if err == nil {
+		return nil
+	}
 	return newFailure(err, nil, opts)
 }
 
