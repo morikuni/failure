@@ -21,6 +21,8 @@ func TestFailure(t *testing.T) {
 		Err error
 	}
 	type Expect struct {
+		ShouldNil bool
+
 		Code      failure.Code
 		Message   string
 		Fields    []failure.Info
@@ -38,56 +40,73 @@ func TestFailure(t *testing.T) {
 		"new": {
 			Input{failure.New(TestCodeA, failure.Info{"aaa": 1})},
 			Expect{
+				false,
 				TestCodeA,
 				failure.DefaultMessage,
 				[]failure.Info{{"aaa": 1}},
-				39,
+				41,
 				"TestFailure(code_a)",
 			},
 		},
 		"translate": {
 			Input{failure.Translate(base, TestCodeB)},
 			Expect{
+				false,
 				TestCodeB,
 				"xxx",
 				[]failure.Info{{"zzz": true}},
-				35,
+				37,
 				"TestFailure(1): TestFailure(code_a)",
 			},
 		},
 		"overwrite": {
 			Input{failure.Translate(base, TestCodeB, failure.Message("aaa"), failure.Info{"bbb": 1})},
 			Expect{
+				false,
 				TestCodeB,
 				"aaa",
 				[]failure.Info{{"bbb": 1}, {"zzz": true}},
-				35,
+				37,
 				"TestFailure(1): TestFailure(code_a)",
 			},
 		},
 		"wrap": {
 			Input{failure.Wrap(io.EOF)},
 			Expect{
+				false,
 				failure.Unknown,
 				failure.DefaultMessage,
 				nil,
-				69,
+				74,
 				"TestFailure: " + io.EOF.Error(),
+			},
+		},
+		"wrap nil": {
+			Input{failure.Wrap(nil)},
+			Expect{
+				true,
+				nil,
+				"",
+				nil,
+				0,
+				"",
 			},
 		},
 		"pkg/errors": {
 			Input{failure.Translate(pkgErr, TestCodeB, failure.Message("aaa"))},
 			Expect{
+				false,
 				TestCodeB,
 				"aaa",
 				nil,
-				36,
+				38,
 				"TestFailure(1): yyy",
 			},
 		},
 		"nil": {
 			Input{nil},
 			Expect{
+				true,
 				nil,
 				"",
 				nil,
@@ -99,6 +118,12 @@ func TestFailure(t *testing.T) {
 
 	for title, test := range tests {
 		t.Run(title, func(t *testing.T) {
+			if test.Expect.ShouldNil {
+				assert.NoError(t, test.Input.Err)
+			} else {
+				assert.Error(t, test.Input.Err)
+			}
+
 			assert.Equal(t, test.Expect.Code, failure.CodeOf(test.Input.Err))
 			assert.Equal(t, test.Expect.Message, failure.MessageOf(test.Input.Err))
 			assert.Equal(t, test.Expect.Fields, failure.InfoListOf(test.Input.Err))
@@ -157,7 +182,7 @@ func TestFailure_Format(t *testing.T) {
   Info:
     zzz = true
   CallStack:
-    \[TestFailure_Format\] /.*/github.com/morikuni/failure/failure_test.go:139
+    \[TestFailure_Format\] /.*/github.com/morikuni/failure/failure_test.go:164
     \[.*`,
 			},
 		},
