@@ -6,7 +6,6 @@ import "strconv"
 // The package provides 2 types codes, StringCode and IntCode.
 type Code interface {
 	// ErrorCode returns an error code in string representation.
-	// Use this only for printing the code, not for comparing codes.
 	ErrorCode() string
 }
 
