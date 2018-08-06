@@ -18,22 +18,34 @@ var (
 	Unknown Code = StringCode("unknown")
 )
 
-// Failure is an error representing failure of something.
+// Failure represents an application error with error code.
+// The package failure provides some constructor functions, but you can create
+// your customized constructor functions, e.g. make sure to fill in code and message.
 type Failure struct {
-	// Code is an error code to handle the error in your source code.
+	// Code is an error code represents what happened in application.
+	// Define error code when you want to distinguish errors. It is when you
+	// write if statement.
 	Code Code
-	// Message is an error message for the application user.
+	// Message is an error message for the application users.
 	// So the message should be human-readable and be helpful.
+	// Do not put a system error message here.
 	Message string
-	// CallStack is a call stack at the time of the error occurred.
+	// CallStack is a call stack when the error occurred.
+	// You can get where the error occurred, e.g. file name, function name etc,
+	// from head frame of the call stack.
 	CallStack CallStack
-	// Info is optional information on why the error occurred.
+	// Info is optional information of the error.
+	// Put a system error message and debug information here, then write them
+	// to logs.
 	Info Info
 	// Underlying is an underlying error of the failure.
+	// The failure is chained by this field.
 	Underlying error
 }
 
-// Failure implements error.
+// Error implements error interface.
+// This returns colon-separated errors.
+// The failure is represented as `function_name(error_code)`.
 func (f Failure) Error() string {
 	buf := &bytes.Buffer{}
 
@@ -62,6 +74,9 @@ func (f Failure) Error() string {
 }
 
 // Format implements fmt.Formatter.
+// %s, %v: same as Error().
+// %+v: %v + list of entire info + most underlying error's stack trace.
+// %#v: Go's representation of the failure struct.
 func (f Failure) Format(s fmt.State, verb rune) {
 	switch verb {
 	case 'v':
@@ -94,27 +109,29 @@ func (f Failure) Format(s fmt.State, verb rune) {
 			io.WriteString(s, f.Error())
 		}
 	case 's':
-		fmt.Fprintf(s, "%v", f)
+		io.WriteString(s, f.Error())
 	}
 }
 
 // Cause returns the underlying error.
-// Use the Cause function instead of calling this method directly.
+// If you want a most underlying error, using a function CauseOf
+// is recommended.
 func (f Failure) Cause() error {
 	return f.Underlying
 }
 
-// New returns an application error.
+// New creates a failure from error code.
 func New(code Code, opts ...Option) error {
 	return newFailure(nil, code, opts)
 }
 
-// Translate translates the error to an application error.
+// Translate translates the error to an application error indicated
+// by error code.
 func Translate(err error, code Code, opts ...Option) error {
 	return newFailure(err, code, opts)
 }
 
-// Wrap wraps the error.
+// Wrap wraps the err without error code.
 func Wrap(err error, opts ...Option) error {
 	if err == nil {
 		return nil
@@ -136,8 +153,9 @@ func newFailure(err error, code Code, opts []Option) Failure {
 	return f
 }
 
-// CodeOf extracts Code from the error.
-// If the error does not contain any code, Unknown is returned.
+// CodeOf extracts an error code from the error.
+// If the error does not include any error codes, the value of
+// variable Unknown is returned.
 func CodeOf(err error) Code {
 	if err == nil {
 		return nil
@@ -154,8 +172,9 @@ func CodeOf(err error) Code {
 	return Unknown
 }
 
-// MessageOf extracts message from the error.
-// If the error does not contain any messages, DefaultMessage is returned.
+// MessageOf extracts the message from the error.
+// If the error does not include any messages, the value of
+// variable DefaultMessage is returned.
 func MessageOf(err error) string {
 	if err == nil {
 		return ""
@@ -173,7 +192,7 @@ func MessageOf(err error) string {
 }
 
 // CallStackOf extracts call stack from the error.
-// Returned call stack is for the deepest error in underlying errors.
+// Returned call stack is for the most underlying error.
 func CallStackOf(err error) CallStack {
 	if err == nil {
 		return nil
@@ -192,13 +211,13 @@ func CallStackOf(err error) CallStack {
 		}
 		return e.CallStack
 	case stackTracer:
-		return CallStackFromPkgErrors(e.StackTrace())
+		return callStackFromPkgErrors(e.StackTrace())
 	}
 
 	return nil
 }
 
-// InfoListOf extracts infos from the error.
+// InfoListOf extracts list of information from the error.
 func InfoListOf(err error) []Info {
 	if err == nil {
 		return nil
@@ -215,7 +234,7 @@ func InfoListOf(err error) []Info {
 	return nil
 }
 
-// CauseOf returns an underlying error of the error.
+// CauseOf returns the most underlying error from the error.
 func CauseOf(err error) error {
 	type causer interface {
 		Cause() error

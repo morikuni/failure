@@ -11,10 +11,13 @@ import (
 )
 
 // CallStack represents a call stack.
+// The call stack includes information where the occurred and
+// how the function was called.
 type CallStack interface {
-	// HeadFrame returns a Frame of the where call stack is created.
+	// HeadFrame returns a frame of where call stack is created.
+	// This is same as Frames()[0], but uses memory more efficiently.
 	HeadFrame() Frame
-	// Frames returns frames of the call stack.
+	// Frames returns entire frames of the call stack.
 	Frames() []Frame
 }
 
@@ -78,7 +81,7 @@ func (cs callStack) Format(s fmt.State, verb rune) {
 	}
 }
 
-// Callers returns call stack for the current state.
+// Callers returns a call stack for the current state.
 func Callers(skip int) CallStack {
 	var pcs [32]uintptr
 	n := runtime.Callers(skip+2, pcs[:])
