@@ -89,8 +89,7 @@ func Callers(skip int) CallStack {
 	return callStack{pcs[:n]}
 }
 
-// CallStackFromPkgErrors creates CallStack from errors.StackTrace.
-func CallStackFromPkgErrors(st errors.StackTrace) CallStack {
+func callStackFromPkgErrors(st errors.StackTrace) CallStack {
 	pcs := make([]uintptr, len(st))
 	for i, v := range st {
 		pcs[i] = uintptr(v)
