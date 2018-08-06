@@ -12,7 +12,7 @@ type Code interface {
 // StringCode represents an error code in string.
 type StringCode string
 
-// ErrorCode implements Code.
+// ErrorCode implements the interface Code.
 func (c StringCode) ErrorCode() string {
 	return string(c)
 }

@@ -43,7 +43,7 @@ type Failure struct {
 	Underlying error
 }
 
-// Error implements error interface.
+// Error implements the interface error.
 // This returns colon-separated errors.
 // The failure is represented as `function_name(error_code)`.
 func (f Failure) Error() string {
@@ -73,7 +73,7 @@ func (f Failure) Error() string {
 	return buf.String()
 }
 
-// Format implements fmt.Formatter.
+// Format implements the interface fmt.Formatter.
 // %s, %v: same as Error().
 // %+v: %v + list of entire info + most underlying error's stack trace.
 // %#v: Go's representation of the failure struct.
