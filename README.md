@@ -11,25 +11,35 @@ It is inspired by [https://middlemost.com/failure-is-your-domain](https://middle
 The package provides an error type below.
 
 ```go
-// Failure is an error representing failure of something.
+// Failure represents an application error with error code.
+// The package failure provides some constructor functions, but you can create
+// your customized constructor functions, e.g. make sure to fill in code and message.
 type Failure struct {
-	// Code is an error code to handle the error in your source code.
+	// Code is an error code represents what happened in application.
+	// Define error code when you want to distinguish errors. It is when you
+	// write if statement.
 	Code Code
-	// Message is an error message for the application user.
+	// Message is an error message for the application users.
 	// So the message should be human-readable and be helpful.
+	// Do not put a system error message here.
 	Message string
-	// CallStack is a call stack at the time of the error occurred.
+	// CallStack is a call stack when the error occurred.
+	// You can get where the error occurred, e.g. file name, function name etc,
+	// from head frame of the call stack.
 	CallStack CallStack
-	// Info is optional information on why the error occurred.
+	// Info is optional information of the error.
+	// Put a system error message and debug information here, then write them
+	// to logs.
 	Info Info
 	// Underlying is an underlying error of the failure.
+	// The failure is chained by this field.
 	Underlying error
 }
 ```
 
 ## Example
 
-The failure works with error codes you defined in your application.
+The failure works with error codes defined in your application.
 
 ```go
 package main

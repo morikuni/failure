@@ -45,7 +45,7 @@ type Failure struct {
 
 // Error implements the interface error.
 // This returns colon-separated errors.
-// The failure is represented as `function_name(error_code)`.
+// The failure is represented as `receiver_name.function_name(error_code)`.
 func (f Failure) Error() string {
 	buf := &bytes.Buffer{}
 
