@@ -1,6 +1,6 @@
 defaults: &defaults
   docker:
-    - image: circleci/golang:latest
+    - image: circleci/golang:1.11
   working_directory: /go/src/github.com/morikuni/failure
 
 version: 2
@@ -9,12 +9,6 @@ jobs:
     <<: *defaults
     steps:
       - checkout
-      - run:
-          name: install
-          command: make install
-      - run:
-          name: init
-          command: make init
       - run:
           name: test
           command: make test
