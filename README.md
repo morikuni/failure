@@ -7,22 +7,45 @@
 
 Package failure provides an error represented as error code and extensible error interface with wrappers.
 
-You can use error code instead of error type.
+Use error code instead of error type.
 
 ```go
-func main() {
-	var NotFound failure.StringCode = "NotFound"
+var NotFound failure.StringCode = "NotFound"
 
-	err := failure.New(NotFound)
+err := failure.New(NotFound)
+
+if failure.Is(err, NotFound) { // true
+	r.WriteHeader(http.StatusNotFound)
 }
 ```
 
-and 
+Wrap and unwrap errors.
 
+```go
+type Unwrapper interface {
+	UnwrapError() error
+}
+
+type Wrapper interface {
+	WrapError(err error) error
+}
+
+err = failure.Wrap(err, MarkTemporary())
+```
+
+Iterate wrapped errors.
+
+```go
+i := failure.NewIterator(err)
+for i.Next() { // unwrap error
+	err := i.Error()
+	if e, ok := err.(Temporary); ok {
+		return e.IsTemporary()
+	}
+}
+```
 
 ## Example
-
-The failure works with error codes defined in your application.
 
 ```go
 package main
