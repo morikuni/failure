@@ -5,37 +5,20 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/morikuni/failure)](https://goreportcard.com/report/github.com/morikuni/failure)
 [![codecov](https://codecov.io/gh/morikuni/failure/branch/master/graph/badge.svg)](https://codecov.io/gh/morikuni/failure)
 
-failure is a utility package for handling application errors.
-It is inspired by [https://middlemost.com/failure-is-your-domain](https://middlemost.com/failure-is-your-domain) and [github.com/pkg/errors](https://github.com/pkg/errors).
+Package failure provides an error represented as error code and extensible error interface with wrappers.
 
-The package provides an error type below.
+You can use error code instead of error type.
 
 ```go
-// Failure represents an application error with error code.
-// The package failure provides some constructor functions, but you can create
-// your customized constructor functions, e.g. make sure to fill in code and message.
-type Failure struct {
-	// Code is an error code represents what happened in application.
-	// Define error code when you want to distinguish errors. It is when you
-	// write if statement.
-	Code Code
-	// Message is an error message for the application users.
-	// So the message should be human-readable and be helpful.
-	// Do not put a system error message here.
-	Message string
-	// CallStack is a call stack when the error occurred.
-	// You can get where the error occurred, e.g. file name, function name etc,
-	// from head frame of the call stack.
-	CallStack CallStack
-	// Info is optional information of the error.
-	// Put a system error message and debug information here, then write them
-	// to logs.
-	Info Info
-	// Underlying is an underlying error of the failure.
-	// The failure is chained by this field.
-	Underlying error
+func main() {
+	var NotFound failure.StringCode = "NotFound"
+
+	err := failure.New(NotFound)
 }
 ```
+
+and 
+
 
 ## Example
 
@@ -63,7 +46,7 @@ func GetACL(projectID, userID string) (acl interface{}, e error) {
 	notFound := true
 	if notFound {
 		return nil, failure.New(NotFound,
-			failure.Info{"projectID": projectID, "userID": userID},
+			failure.Debug{"project_id": projectID, "user_id": userID},
 		)
 	}
 	err := errors.New("error")
@@ -76,15 +59,13 @@ func GetACL(projectID, userID string) (acl interface{}, e error) {
 func GetProject(projectID, userID string) (project interface{}, e error) {
 	_, err := GetACL(projectID, userID)
 	if err != nil {
-		switch failure.CodeOf(err) {
-		case NotFound:
+		if failure.Is(err, NotFound) {
 			return nil, failure.Translate(err, Forbidden,
 				failure.Message("You have no grant to access the project."),
-				failure.Info{"additionalInfo": "hello"},
+				failure.Debug{"additional_info": "hello"},
 			)
-		default:
-			return nil, err
 		}
+		return nil, failure.Wrap(err)
 	}
 	return nil, nil
 }
@@ -132,7 +113,7 @@ func HandleError(w http.ResponseWriter, err error) {
 	// forbidden
 	fmt.Println(failure.MessageOf(err))
 	// You have no grant to access the project.
-	fmt.Println(failure.InfoListOf(err))
+	fmt.Println(failure.DebugsOf(err))
 	// [map[additionalInfo:hello] map[projectID:123 userID:456]]
 	fmt.Println(failure.CallStackOf(err))
 	// GetACL: GetProject: Handler: HandlerFunc.ServeHTTP: (*ServeMux).ServeHTTP: serverHandler.ServeHTTP: (*conn).serve: goexit
