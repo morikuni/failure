@@ -19,23 +19,23 @@ if failure.Is(err, NotFound) { // true
 }
 ```
 
-Wrap and unwrap errors.
+Wrap errors.
+
+```go
+type Wrapper interface {
+	WrapError(err error) error
+}
+
+err := failure.Wrap(err, MarkTemporary())
+```
+
+Unwrap errors with Iterator.
 
 ```go
 type Unwrapper interface {
 	UnwrapError() error
 }
 
-type Wrapper interface {
-	WrapError(err error) error
-}
-
-err = failure.Wrap(err, MarkTemporary())
-```
-
-Iterate wrapped errors.
-
-```go
 i := failure.NewIterator(err)
 for i.Next() { // unwrap error
 	err := i.Error()
@@ -113,35 +113,36 @@ func HandleError(w http.ResponseWriter, err error) {
 
 	io.WriteString(w, failure.MessageOf(err))
 
-	// The failure contains useful messages for creating response and debugging.
-
 	fmt.Println(err)
-	// GetProject(forbidden): GetACL(not_found)
+	// GetProject: code(forbidden): GetACL: code(not_found)
 	fmt.Printf("%+v\n", err)
-	// GetProject(forbidden): GetACL(not_found)
-	//   Info:
-	//     additionalInfo = hello
-	//     projectID = 123
-	//     userID = 456
-	//   CallStack:
-	//     [GetACL] /go/src/github.com/morikuni/failure/example/main.go:21
-	//     [GetProject] /go/src/github.com/morikuni/failure/example/main.go:33
-	//     [Handler] /go/src/github.com/morikuni/failure/example/main.go:49
-	//     [HandlerFunc.ServeHTTP] /usr/local/go/src/net/http/server.go:1918
-	//     [(*ServeMux).ServeHTTP] /usr/local/go/src/net/http/server.go:2254
-	//     [serverHandler.ServeHTTP] /usr/local/go/src/net/http/server.go:2619
-	//     [(*conn).serve] /usr/local/go/src/net/http/server.go:1801
-	//     [goexit] /usr/local/go/src/runtime/asm_amd64.s:2337
+	// [GetProject] /go/src/github.com/morikuni/failure/exmple/example.go:36
+	//     additional_info = hello
+	//     message("You have no grant to access the project.")
+	//     code(forbidden)
+	// [GetACL] /go/src/github.com/morikuni/failure/exmple/example.go:21
+	//     project_id = 123
+	//     user_id = 456
+	//     code(not_found)
+	// [CallStack]
+	//     [GetACL] /go/src/github.com/morikuni/failure/exmple/example.go:21
+	//     [GetProject] /go/src/github.com/morikuni/failure/exmple/example.go:33
+	//     [Handler] /go/src/github.com/morikuni/failure/exmple/example.go:47
+	//     [HandlerFunc.ServeHTTP] /usr/local/go/src/net/http/server.go:1964
+	//     [(*ServeMux).ServeHTTP] /usr/local/go/src/net/http/server.go:2361
+	//     [serverHandler.ServeHTTP] /usr/local/go/src/net/http/server.go:2741
+	//     [(*conn).serve] /usr/local/go/src/net/http/server.go:1847
+	//     [goexit] /usr/local/go/src/runtime/asm_amd64.s:1333
 	fmt.Println(failure.CodeOf(err))
 	// forbidden
 	fmt.Println(failure.MessageOf(err))
 	// You have no grant to access the project.
 	fmt.Println(failure.DebugsOf(err))
-	// [map[additionalInfo:hello] map[projectID:123 userID:456]]
+	// [map[additional_info:hello] map[project_id:123 user_id:456]]
 	fmt.Println(failure.CallStackOf(err))
 	// GetACL: GetProject: Handler: HandlerFunc.ServeHTTP: (*ServeMux).ServeHTTP: serverHandler.ServeHTTP: (*conn).serve: goexit
 	fmt.Println(failure.CauseOf(err))
-	// GetACL(not_found)
+	// code(not_found)
 }
 
 func main() {
