@@ -176,7 +176,8 @@ func CallStackOf(err error) CallStack {
 // WithFormatter appends error formatter to an error.
 //
 //     %v+: Print trace for each place, and deepest call stack.
-//     others (%s, %v): Same as err.Error()
+//     %#v: Print raw structure of the error.
+//     others (%s, %v): Same as err.Error().
 func WithFormatter() Wrapper {
 	return WrapperFunc(func(err error) error {
 		return formatter{err}
