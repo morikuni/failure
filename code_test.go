@@ -3,6 +3,8 @@ package failure_test
 import (
 	"testing"
 
+	"io"
+
 	"github.com/morikuni/failure"
 	"github.com/stretchr/testify/assert"
 )
@@ -58,4 +60,8 @@ func TestIs(t *testing.T) {
 	assert.False(t, failure.Is(errA, B))
 	assert.False(t, failure.Is(errB, A))
 	assert.False(t, failure.Is(errC, A))
+
+	assert.False(t, failure.Is(nil, A, B))
+	assert.False(t, failure.Is(io.EOF, A, B))
+	assert.False(t, failure.Is(errA))
 }

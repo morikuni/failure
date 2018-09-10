@@ -145,47 +145,21 @@ func TestFailure(t *testing.T) {
 
 func TestFailure_Format(t *testing.T) {
 	base := failure.New(TestCodeA, failure.Message("xxx"), failure.Debug{"zzz": true})
-	tests := map[string]struct {
-		err    error
-		format string
+	err := failure.Wrap(base)
 
-		wantString string
-	}{
-		"v": {
-			err:    failure.Wrap(base),
-			format: "%v",
+	want := "TestFailure_Format: TestFailure_Format: code(code_a)"
+	assert.Equal(t, want, fmt.Sprintf("%s", err))
+	assert.Equal(t, want, fmt.Sprintf("%v", err))
 
-			wantString: `TestFailure_Format: TestFailure_Format: code\(code_a\)`,
-		},
-		"+v": {
-			err:    failure.Wrap(base),
-			format: "%+v",
-
-			wantString: `\[TestFailure_Format\] /.*/github.com/morikuni/failure/failure_test.go:161
+	exp := `\[TestFailure_Format\] /.*/github.com/morikuni/failure/failure_test.go:148
 \[TestFailure_Format\] /.*/github.com/morikuni/failure/failure_test.go:147
     zzz = true
     message\("xxx"\)
     code\(code_a\)
 \[CallStack\]
     \[TestFailure_Format\] /.*/github.com/morikuni/failure/failure_test.go:147
-    \[.*`,
-		},
-	}
-
-	for title, test := range tests {
-		t.Run(title, func(t *testing.T) {
-			assert.Regexp(t, test.wantString, fmt.Sprintf(test.format, test.err))
-		})
-	}
-}
-
-func TestCauseOf(t *testing.T) {
-	f := failure.Wrap(io.EOF)
-	assert.Equal(t, io.EOF, failure.CauseOf(f))
-
-	base := failure.Wrap(io.EOF)
-	pkgErr := errors.Wrap(base, "aaa")
-	assert.Equal(t, io.EOF, failure.CauseOf(failure.Wrap(pkgErr)))
+    \[.*`
+	assert.Regexp(t, exp, fmt.Sprintf("%+v", err))
 }
 
 func BenchmarkFailure(b *testing.B) {
