@@ -17,128 +17,123 @@ const (
 )
 
 func TestFailure(t *testing.T) {
-	type Input struct {
-		Err error
-	}
-	type Expect struct {
-		ShouldNil bool
-
-		Code      failure.Code
-		Message   string
-		Fields    []failure.Info
-		StackLine int
-		Error     string
-	}
-	type Test struct {
-		Input
-		Expect
-	}
-
-	base := failure.New(TestCodeA, failure.Message("xxx"), failure.Info{"zzz": true})
+	base := failure.New(TestCodeA, failure.Message("xxx"), failure.Debug{"zzz": true})
 	pkgErr := errors.New("yyy")
-	tests := map[string]Test{
+	tests := map[string]struct {
+		err error
+
+		shouldNil     bool
+		wantCode      failure.Code
+		wantMessage   string
+		wantDebugs    []failure.Debug
+		wantStackLine int
+		wantError     string
+	}{
 		"new": {
-			Input{failure.New(TestCodeA, failure.Info{"aaa": 1})},
-			Expect{
-				false,
-				TestCodeA,
-				failure.DefaultMessage,
-				[]failure.Info{{"aaa": 1}},
-				41,
-				"TestFailure(code_a)",
-			},
+			err: failure.New(TestCodeA, failure.Debug{"aaa": 1}),
+
+			shouldNil:     false,
+			wantCode:      TestCodeA,
+			wantMessage:   "",
+			wantDebugs:    []failure.Debug{{"aaa": 1}},
+			wantStackLine: 33,
+			wantError:     "TestFailure: code(code_a)",
 		},
 		"translate": {
-			Input{failure.Translate(base, TestCodeB)},
-			Expect{
-				false,
-				TestCodeB,
-				"xxx",
-				[]failure.Info{{"zzz": true}},
-				37,
-				"TestFailure(1): TestFailure(code_a)",
-			},
+			err: failure.Translate(base, TestCodeB),
+
+			shouldNil:     false,
+			wantCode:      TestCodeB,
+			wantMessage:   "xxx",
+			wantDebugs:    []failure.Debug{{"zzz": true}},
+			wantStackLine: 20,
+			wantError:     "TestFailure: code(1): TestFailure: code(code_a)",
 		},
 		"overwrite": {
-			Input{failure.Translate(base, TestCodeB, failure.Message("aaa"), failure.Info{"bbb": 1})},
-			Expect{
-				false,
-				TestCodeB,
-				"aaa",
-				[]failure.Info{{"bbb": 1}, {"zzz": true}},
-				37,
-				"TestFailure(1): TestFailure(code_a)",
-			},
+			err: failure.Translate(base, TestCodeB, failure.Message("aaa"), failure.Debug{"bbb": 1}),
+
+			shouldNil:     false,
+			wantCode:      TestCodeB,
+			wantMessage:   "aaa",
+			wantDebugs:    []failure.Debug{{"bbb": 1}, {"zzz": true}},
+			wantStackLine: 20,
+			wantError:     "TestFailure: code(1): TestFailure: code(code_a)",
 		},
 		"wrap": {
-			Input{failure.Wrap(io.EOF)},
-			Expect{
-				false,
-				failure.Unknown,
-				failure.DefaultMessage,
-				nil,
-				74,
-				"TestFailure: " + io.EOF.Error(),
-			},
+			err: failure.Wrap(io.EOF),
+
+			shouldNil:     false,
+			wantCode:      nil,
+			wantMessage:   "",
+			wantDebugs:    nil,
+			wantStackLine: 63,
+			wantError:     "TestFailure: " + io.EOF.Error(),
 		},
 		"wrap nil": {
-			Input{failure.Wrap(nil)},
-			Expect{
-				true,
-				nil,
-				"",
-				nil,
-				0,
-				"",
-			},
+			err: failure.Wrap(nil),
+
+			shouldNil:     true,
+			wantCode:      nil,
+			wantMessage:   "",
+			wantDebugs:    nil,
+			wantStackLine: 0,
+			wantError:     "",
 		},
 		"pkg/errors": {
-			Input{failure.Translate(pkgErr, TestCodeB, failure.Message("aaa"))},
-			Expect{
-				false,
-				TestCodeB,
-				"aaa",
-				nil,
-				38,
-				"TestFailure(1): yyy",
-			},
+			err: failure.Translate(pkgErr, TestCodeB, failure.Message("aaa")),
+
+			shouldNil:     false,
+			wantCode:      TestCodeB,
+			wantMessage:   "aaa",
+			wantDebugs:    nil,
+			wantStackLine: 21,
+			wantError:     "TestFailure: code(1): yyy",
 		},
 		"nil": {
-			Input{nil},
-			Expect{
-				true,
-				nil,
-				"",
-				nil,
-				0,
-				"",
-			},
+			err: nil,
+
+			shouldNil:     true,
+			wantCode:      nil,
+			wantMessage:   "",
+			wantDebugs:    nil,
+			wantStackLine: 0,
+			wantError:     "",
+		},
+		"custom": {
+			err: failure.Custom(io.EOF),
+
+			shouldNil:     false,
+			wantCode:      nil,
+			wantMessage:   "",
+			wantDebugs:    nil,
+			wantStackLine: 0,
+			wantError:     io.EOF.Error(),
 		},
 	}
 
 	for title, test := range tests {
 		t.Run(title, func(t *testing.T) {
-			if test.Expect.ShouldNil {
-				assert.NoError(t, test.Input.Err)
+			if test.shouldNil {
+				assert.NoError(t, test.err)
 			} else {
-				assert.Error(t, test.Input.Err)
+				assert.Error(t, test.err)
 			}
 
-			assert.Equal(t, test.Expect.Code, failure.CodeOf(test.Input.Err))
-			assert.Equal(t, test.Expect.Message, failure.MessageOf(test.Input.Err))
-			assert.Equal(t, test.Expect.Fields, failure.InfoListOf(test.Input.Err))
+			assert.Equal(t, test.wantCode, failure.CodeOf(test.err))
+			assert.Equal(t, test.wantMessage, failure.MessageOf(test.err))
+			assert.Equal(t, test.wantDebugs, failure.DebugsOf(test.err))
 
-			if test.Expect.Error != "" {
-				assert.EqualError(t, test.Input.Err, test.Expect.Error)
+			if test.wantError != "" {
+				assert.EqualError(t, test.err, test.wantError)
 			} else {
-				assert.Nil(t, test.Input.Err)
+				assert.Nil(t, test.err)
 			}
 
-			cs := failure.CallStackOf(test.Input.Err)
-			if test.Expect.StackLine != 0 {
+			cs := failure.CallStackOf(test.err)
+			if test.wantStackLine != 0 {
 				fs := cs.Frames()
 				require.NotEmpty(t, fs)
-				if !assert.Equal(t, test.Expect.StackLine, fs[0].Line()) {
+				if !assert.Equal(t, test.wantStackLine, fs[0].Line()) {
 					t.Log(fs[0])
 				}
 			} else {
@@ -149,80 +144,25 @@ func TestFailure(t *testing.T) {
 }
 
 func TestFailure_Format(t *testing.T) {
-	type Input struct {
-		Err    error
-		Format string
-	}
-	type Expect struct {
-		OutputRegexp string
-	}
-	type Test struct {
-		Input
-		Expect
-	}
+	base := failure.New(TestCodeA, failure.Message("xxx"), failure.Debug{"zzz": true})
+	err := failure.Wrap(base)
 
-	base := failure.New(TestCodeA, failure.Message("xxx"), failure.Info{"zzz": true})
-	tests := map[string]Test{
-		"v": {
-			Input{
-				failure.Wrap(base),
-				"%v",
-			},
-			Expect{
-				`TestFailure_Format: TestFailure_Format\(code_a\)`,
-			},
-		},
-		"+v": {
-			Input{
-				failure.Wrap(base),
-				"%+v",
-			},
-			Expect{
-				`TestFailure_Format: TestFailure_Format\(code_a\)
-  Info:
+	want := "TestFailure_Format: TestFailure_Format: code(code_a)"
+	assert.Equal(t, want, fmt.Sprintf("%s", err))
+	assert.Equal(t, want, fmt.Sprintf("%v", err))
+
+	exp := `failure.formatter{error:failure.withCallStack{.*`
+	assert.Regexp(t, exp, fmt.Sprintf("%#v", err))
+
+	exp = `\[TestFailure_Format\] /.*/github.com/morikuni/failure/failure_test.go:148
+\[TestFailure_Format\] /.*/github.com/morikuni/failure/failure_test.go:147
     zzz = true
-  CallStack:
-    \[TestFailure_Format\] /.*/github.com/morikuni/failure/failure_test.go:164
-    \[.*`,
-			},
-		},
-		"+v for empty": {
-			Input{
-				failure.Failure{},
-				"%+v",
-			},
-			Expect{
-				`
-  Info:
-  CallStack:
-`,
-			},
-		},
-		"#v": {
-			Input{
-				failure.Wrap(base, failure.Message("hello")),
-				"%#v",
-			},
-			Expect{
-				`failure.Failure{Code:failure.Code\(nil\), Message:"hello", CallStack:\[\]failure.Frame{.*}, Info:failure.Info\(nil\), Underlying:failure.Failure{.*}}`,
-			},
-		},
-	}
-
-	for title, test := range tests {
-		t.Run(title, func(t *testing.T) {
-			assert.Regexp(t, test.Expect.OutputRegexp, fmt.Sprintf(test.Input.Format, test.Input.Err))
-		})
-	}
-}
-
-func TestCauseOf(t *testing.T) {
-	f := failure.New(TestCodeB)
-	assert.Equal(t, f, failure.CauseOf(f))
-
-	base := failure.New(TestCodeA)
-	pkgErr := errors.Wrap(base, "aaa")
-	assert.Equal(t, base, failure.CauseOf(failure.Wrap(pkgErr)))
+    message\("xxx"\)
+    code\(code_a\)
+\[CallStack\]
+    \[TestFailure_Format\] /.*/github.com/morikuni/failure/failure_test.go:147
+    \[.*`
+	assert.Regexp(t, exp, fmt.Sprintf("%+v", err))
 }
 
 func BenchmarkFailure(b *testing.B) {
