@@ -192,11 +192,25 @@ func (f formatter) UnwrapError() error {
 }
 
 func (f formatter) Format(s fmt.State, verb rune) {
-	if !(verb == 'v' && s.Flag('+')) {
+	if verb != 'v' { // %s
 		io.WriteString(s, f.Error())
 		return
 	}
 
+	if s.Flag('#') { // %#v
+		type formatter struct {
+			error
+		}
+		fmt.Fprintf(s, "%#v", formatter{f.error})
+		return
+	}
+
+	if !s.Flag('+') { // %v
+		io.WriteString(s, f.Error())
+		return
+	}
+
+	// %+v
 	type callStacker interface {
 		GetCallStack() CallStack
 	}
