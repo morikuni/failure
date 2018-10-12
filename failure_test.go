@@ -144,23 +144,25 @@ func TestFailure(t *testing.T) {
 }
 
 func TestFailure_Format(t *testing.T) {
-	base := failure.New(TestCodeA, failure.Message("xxx"), failure.Debug{"zzz": true})
-	err := failure.Wrap(base)
+	e1 := fmt.Errorf("yyy")
+	e2 := failure.Translate(e1, TestCodeA, failure.Message("xxx"), failure.Debug{"zzz": true})
+	err := failure.Wrap(e2)
 
-	want := "TestFailure_Format: TestFailure_Format: code(code_a)"
+	want := "TestFailure_Format: TestFailure_Format: code(code_a): yyy"
 	assert.Equal(t, want, fmt.Sprintf("%s", err))
 	assert.Equal(t, want, fmt.Sprintf("%v", err))
 
 	exp := `failure.formatter{error:failure.withCallStack{.*`
 	assert.Regexp(t, exp, fmt.Sprintf("%#v", err))
 
-	exp = `\[TestFailure_Format\] /.*/github.com/morikuni/failure/failure_test.go:148
-\[TestFailure_Format\] /.*/github.com/morikuni/failure/failure_test.go:147
+	exp = `\[TestFailure_Format\] /.*/github.com/morikuni/failure/failure_test.go:149
+\[TestFailure_Format\] /.*/github.com/morikuni/failure/failure_test.go:148
     zzz = true
     message\("xxx"\)
     code\(code_a\)
+    error\("yyy"\)
 \[CallStack\]
-    \[TestFailure_Format\] /.*/github.com/morikuni/failure/failure_test.go:147
+    \[TestFailure_Format\] /.*/github.com/morikuni/failure/failure_test.go:148
     \[.*`
 	assert.Regexp(t, exp, fmt.Sprintf("%+v", err))
 }

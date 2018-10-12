@@ -240,6 +240,10 @@ func (f formatter) Format(s fmt.State, verb rune) {
 			fmt.Fprintf(s, "    message(%q)\n", t.GetMessage())
 		case coder:
 			fmt.Fprintf(s, "    code(%s)\n", t.GetCode().ErrorCode())
+		case formatter:
+			// do nothing
+		default:
+			fmt.Fprintf(s, "    error(%q)\n", err.Error())
 		}
 	}
 
