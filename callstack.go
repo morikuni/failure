@@ -32,7 +32,7 @@ func (cs callStack) HeadFrame() Frame {
 
 	rfs := runtime.CallersFrames(cs.pcs[:1])
 	f, _ := rfs.Next()
-	return frame{f.File, f.Line, f.Function}
+	return frame{f.File, f.Line, f.Function, f.PC}
 }
 
 func (cs callStack) Frames() []Frame {
@@ -46,7 +46,7 @@ func (cs callStack) Frames() []Frame {
 	for {
 		f, more := rfs.Next()
 
-		fs = append(fs, frame{f.File, f.Line, f.Function})
+		fs = append(fs, frame{f.File, f.Line, f.Function, f.PC})
 
 		if !more {
 			break
@@ -113,14 +113,17 @@ type Frame interface {
 	Func() string
 	// Pkg returns a package name of the function.
 	Pkg() string
+	// PC returns a program counter of this frame.
+	PC() uintptr
 }
 
-var emptyFrame = frame{"???", 0, "???"}
+var emptyFrame = frame{"???", 0, "???", uintptr(0)}
 
 type frame struct {
 	file     string
 	line     int
 	function string
+	pc       uintptr
 }
 
 func (f frame) Path() string {
@@ -141,6 +144,10 @@ func (f frame) Func() string {
 		return strings.Join(fs[1:], ".")
 	}
 	return fs[0]
+}
+
+func (f frame) PC() uintptr {
+	return f.pc
 }
 
 func (f frame) Pkg() string {
