@@ -37,7 +37,7 @@ func TestFailure(t *testing.T) {
 			wantMessage:   "",
 			wantDebugs:    []failure.Debug{{"aaa": 1}},
 			wantStackLine: 33,
-			wantError:     "TestFailure: code(code_a)",
+			wantError:     "failure_test.TestFailure: code(code_a)",
 		},
 		"translate": {
 			err: failure.Translate(base, TestCodeB),
@@ -47,7 +47,7 @@ func TestFailure(t *testing.T) {
 			wantMessage:   "xxx",
 			wantDebugs:    []failure.Debug{{"zzz": true}},
 			wantStackLine: 20,
-			wantError:     "TestFailure: code(1): TestFailure: code(code_a)",
+			wantError:     "failure_test.TestFailure: code(1): failure_test.TestFailure: code(code_a)",
 		},
 		"overwrite": {
 			err: failure.Translate(base, TestCodeB, failure.Message("aaa"), failure.Debug{"bbb": 1}),
@@ -57,7 +57,7 @@ func TestFailure(t *testing.T) {
 			wantMessage:   "aaa",
 			wantDebugs:    []failure.Debug{{"bbb": 1}, {"zzz": true}},
 			wantStackLine: 20,
-			wantError:     "TestFailure: code(1): TestFailure: code(code_a)",
+			wantError:     "failure_test.TestFailure: code(1): failure_test.TestFailure: code(code_a)",
 		},
 		"wrap": {
 			err: failure.Wrap(io.EOF),
@@ -67,7 +67,7 @@ func TestFailure(t *testing.T) {
 			wantMessage:   "",
 			wantDebugs:    nil,
 			wantStackLine: 63,
-			wantError:     "TestFailure: " + io.EOF.Error(),
+			wantError:     "failure_test.TestFailure: " + io.EOF.Error(),
 		},
 		"wrap nil": {
 			err: failure.Wrap(nil),
@@ -87,7 +87,7 @@ func TestFailure(t *testing.T) {
 			wantMessage:   "aaa",
 			wantDebugs:    nil,
 			wantStackLine: 21,
-			wantError:     "TestFailure: code(1): yyy",
+			wantError:     "failure_test.TestFailure: code(1): yyy",
 		},
 		"nil": {
 			err: nil,
@@ -148,21 +148,21 @@ func TestFailure_Format(t *testing.T) {
 	e2 := failure.Translate(e1, TestCodeA, failure.Message("xxx"), failure.Debug{"zzz": true})
 	err := failure.Wrap(e2)
 
-	want := "TestFailure_Format: TestFailure_Format: code(code_a): yyy"
+	want := "failure_test.TestFailure_Format: failure_test.TestFailure_Format: code(code_a): yyy"
 	assert.Equal(t, want, fmt.Sprintf("%s", err))
 	assert.Equal(t, want, fmt.Sprintf("%v", err))
 
 	exp := `failure.formatter{error:failure.withCallStack{.*`
 	assert.Regexp(t, exp, fmt.Sprintf("%#v", err))
 
-	exp = `\[TestFailure_Format\] /.*/github.com/morikuni/failure/failure_test.go:149
-\[TestFailure_Format\] /.*/github.com/morikuni/failure/failure_test.go:148
+	exp = `\[failure_test.TestFailure_Format\] /.*/github.com/morikuni/failure/failure_test.go:149
+\[failure_test.TestFailure_Format\] /.*/github.com/morikuni/failure/failure_test.go:148
     zzz = true
     message\("xxx"\)
     code\(code_a\)
     error\("yyy"\)
 \[CallStack\]
-    \[TestFailure_Format\] /.*/github.com/morikuni/failure/failure_test.go:148
+    \[failure_test.TestFailure_Format\] /.*/github.com/morikuni/failure/failure_test.go:148
     \[.*`
 	assert.Regexp(t, exp, fmt.Sprintf("%+v", err))
 }

@@ -72,7 +72,7 @@ func (cs callStack) Format(s fmt.State, verb rune) {
 				return
 			}
 			for _, f := range fs[:l-1] {
-				fmt.Fprintf(s, "%s: ", f.Func())
+				fmt.Fprintf(s, "%s.%s: ", f.Pkg(), f.Func())
 			}
 			fmt.Fprintf(s, "%v", fs[l-1].Func())
 		}
@@ -159,7 +159,7 @@ func (f frame) Format(s fmt.State, verb rune) {
 	switch verb {
 	case 'v':
 		if s.Flag('+') {
-			fmt.Fprintf(s, "[%s] ", f.Func())
+			fmt.Fprintf(s, "[%s.%s] ", f.Pkg(), f.Func())
 		}
 		fallthrough
 	case 's':

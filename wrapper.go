@@ -133,7 +133,8 @@ type withCallStack struct {
 }
 
 func (w withCallStack) Error() string {
-	return fmt.Sprintf("%s: %s", w.callStack.HeadFrame().Func(), w.err.Error())
+	head := w.callStack.HeadFrame()
+	return fmt.Sprintf("%s.%s: %s", head.Pkg(), head.Func(), w.err.Error())
 }
 
 func (w withCallStack) UnwrapError() error {
