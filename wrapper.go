@@ -244,7 +244,7 @@ func (f formatter) Format(s fmt.State, verb rune) {
 		case formatter:
 			// do nothing
 		default:
-			fmt.Fprintf(s, "    error(%q)\n", err.Error())
+			fmt.Fprintf(s, "    %T(%q)\n", err, err.Error())
 		}
 	}
 

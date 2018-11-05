@@ -160,7 +160,7 @@ func TestFailure_Format(t *testing.T) {
     zzz = true
     message\("xxx"\)
     code\(code_a\)
-    error\("yyy"\)
+    \*errors.errorString\("yyy"\)
 \[CallStack\]
     \[failure_test.TestFailure_Format\] /.*/github.com/morikuni/failure/failure_test.go:148
     \[.*`
