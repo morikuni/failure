@@ -55,11 +55,11 @@ func TestCallStack_Format(t *testing.T) {
 	cs := X()
 
 	assert.Regexp(t,
-		`X: TestCallStack_Format: .*`,
+		`failure_test.X: failure_test.TestCallStack_Format: .*`,
 		fmt.Sprintf("%v", cs),
 	)
 	assert.Regexp(t,
-		`X: TestCallStack_Format: .*`,
+		`failure_test.X: failure_test.TestCallStack_Format: .*`,
 		fmt.Sprintf("%s", cs),
 	)
 	assert.Regexp(t,
@@ -67,8 +67,8 @@ func TestCallStack_Format(t *testing.T) {
 		fmt.Sprintf("%#v", cs),
 	)
 	assert.Regexp(t,
-		`\[X\] /.+/github.com/morikuni/failure/callstack_test.go:13
-\[TestCallStack_Format\] /.+/github.com/morikuni/failure/callstack_test.go:55
+		`\[failure_test.X\] /.+/github.com/morikuni/failure/callstack_test.go:13
+\[failure_test.TestCallStack_Format\] /.+/github.com/morikuni/failure/callstack_test.go:55
 \[.*`,
 		fmt.Sprintf("%+v", cs),
 	)
@@ -90,7 +90,7 @@ func TestFrame_Format(t *testing.T) {
 		fmt.Sprintf("%#v", f),
 	)
 	assert.Regexp(t,
-		`\[X\] /.+/github.com/morikuni/failure/callstack_test.go:13`,
+		`\[failure_test.X\] /.+/github.com/morikuni/failure/callstack_test.go:13`,
 		fmt.Sprintf("%+v", f),
 	)
 }
