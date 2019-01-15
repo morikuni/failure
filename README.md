@@ -101,17 +101,32 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func HandleError(w http.ResponseWriter, err error) {
-	switch failure.CodeOf(err) {
-	case NotFound:
-		w.WriteHeader(http.StatusNotFound)
-	case Forbidden:
-		w.WriteHeader(http.StatusForbidden)
-	default:
-		w.WriteHeader(http.StatusInternalServerError)
+func getHTTPStatus(err error) int {
+	c, ok := failure.CodeOf(err)
+	if !ok {
+		return http.StatusInternalServerError
 	}
+	switch c {
+	case NotFound:
+		return http.StatusNotFound
+	case Forbidden:
+		return http.StatusForbidden
+	default:
+		return http.StatusInternalServerError
+	}
+}
 
-	io.WriteString(w, failure.MessageOf(err))
+func getMessage(err error) string {
+	msg, ok := failure.MessageOf(err)
+	if ok {
+		return msg
+	}
+	return "Error"
+}
+
+func HandleError(w http.ResponseWriter, err error) {
+	w.WriteHeader(getHTTPStatus(err))
+	io.WriteString(w, getMessage(err))
 
 	fmt.Println(err)
 	// main.GetProject: code(forbidden): main.GetACL: code(not_found)

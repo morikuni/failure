@@ -119,8 +119,14 @@ func TestFailure(t *testing.T) {
 				assert.Error(t, test.err)
 			}
 
-			assert.Equal(t, test.wantCode, failure.CodeOf(test.err))
-			assert.Equal(t, test.wantMessage, failure.MessageOf(test.err))
+			code, ok := failure.CodeOf(test.err)
+			assert.Equal(t, test.wantCode != nil, ok)
+			assert.Equal(t, test.wantCode, code)
+
+			msg, ok := failure.MessageOf(test.err)
+			assert.Equal(t, test.wantMessage != "", ok)
+			assert.Equal(t, test.wantMessage, msg)
+
 			assert.Equal(t, test.wantDebugs, failure.DebugsOf(test.err))
 
 			if test.wantError != "" {
@@ -129,14 +135,16 @@ func TestFailure(t *testing.T) {
 				assert.Nil(t, test.err)
 			}
 
-			cs := failure.CallStackOf(test.err)
+			cs, ok := failure.CallStackOf(test.err)
 			if test.wantStackLine != 0 {
+				assert.True(t, ok)
 				fs := cs.Frames()
 				require.NotEmpty(t, fs)
 				if !assert.Equal(t, test.wantStackLine, fs[0].Line()) {
 					t.Log(fs[0])
 				}
 			} else {
+				assert.False(t, ok)
 				assert.Nil(t, cs)
 			}
 		})
@@ -155,14 +163,14 @@ func TestFailure_Format(t *testing.T) {
 	exp := `failure.formatter{error:failure.withCallStack{.*`
 	assert.Regexp(t, exp, fmt.Sprintf("%#v", err))
 
-	exp = `\[failure_test.TestFailure_Format\] /.*/github.com/morikuni/failure/failure_test.go:149
-\[failure_test.TestFailure_Format\] /.*/github.com/morikuni/failure/failure_test.go:148
+	exp = `\[failure_test.TestFailure_Format\] /.*/github.com/morikuni/failure/failure_test.go:157
+\[failure_test.TestFailure_Format\] /.*/github.com/morikuni/failure/failure_test.go:156
     zzz = true
     message\("xxx"\)
     code\(code_a\)
     \*errors.errorString\("yyy"\)
 \[CallStack\]
-    \[failure_test.TestFailure_Format\] /.*/github.com/morikuni/failure/failure_test.go:148
+    \[failure_test.TestFailure_Format\] /.*/github.com/morikuni/failure/failure_test.go:156
     \[.*`
 	assert.Regexp(t, exp, fmt.Sprintf("%+v", err))
 }

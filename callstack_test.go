@@ -36,7 +36,9 @@ func Y() error {
 func TestCallStackFromPkgErrors(t *testing.T) {
 	err := Y()
 
-	fs := failure.CallStackOf(err).Frames()
+	cs, ok := failure.CallStackOf(err)
+	assert.True(t, ok)
+	fs := cs.Frames()
 
 	assert.Contains(t, fs[0].Path(), "github.com/morikuni/failure/callstack_test.go")
 	assert.Contains(t, fs[0].File(), "callstack_test.go")
@@ -63,12 +65,12 @@ func TestCallStack_Format(t *testing.T) {
 		fmt.Sprintf("%s", cs),
 	)
 	assert.Regexp(t,
-		`\[\]failure.Frame{/.+/github.com/morikuni/failure/callstack_test.go:13, /.+/github.com/morikuni/failure/callstack_test.go:55, .*}`,
+		`\[\]failure.Frame{/.+/github.com/morikuni/failure/callstack_test.go:13, /.+/github.com/morikuni/failure/callstack_test.go:57, .*}`,
 		fmt.Sprintf("%#v", cs),
 	)
 	assert.Regexp(t,
 		`\[failure_test.X\] /.+/github.com/morikuni/failure/callstack_test.go:13
-\[failure_test.TestCallStack_Format\] /.+/github.com/morikuni/failure/callstack_test.go:55
+\[failure_test.TestCallStack_Format\] /.+/github.com/morikuni/failure/callstack_test.go:57
 \[.*`,
 		fmt.Sprintf("%+v", cs),
 	)
@@ -104,7 +106,7 @@ func TestCallStack_Frames(t *testing.T) {
 	assert.Equal(t, 13, fs[0].Line())
 	assert.Equal(t, "X", fs[0].Func())
 
-	assert.Equal(t, 99, fs[1].Line())
+	assert.Equal(t, 101, fs[1].Line())
 	assert.Equal(t, "TestCallStack_Frames", fs[1].Func())
 }
 

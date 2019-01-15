@@ -34,9 +34,9 @@ func (f Failure) Error() string {
 }
 
 // CodeOf extracts an error Code from the error.
-func CodeOf(err error) Code {
+func CodeOf(err error) (Code, bool) {
 	if err == nil {
-		return nil
+		return nil, false
 	}
 
 	type codeGetter interface {
@@ -47,11 +47,11 @@ func CodeOf(err error) Code {
 	for i.Next() {
 		err := i.Error()
 		if g, ok := err.(codeGetter); ok {
-			return g.GetCode()
+			return g.GetCode(), true
 		}
 	}
 
-	return nil
+	return nil, false
 }
 
 // New creates a Failure from error Code.
