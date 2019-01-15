@@ -73,7 +73,7 @@ func MessageOf(err error) string {
 
 // Debug is a key-value data appended to an error
 // for debugging purpose.
-type Debug map[string]interface{}
+type Debug map[string]string
 
 // WrapError implements the Wrapper interface.
 func (d Debug) WrapError(err error) error {
@@ -235,7 +235,7 @@ func (f formatter) Format(s fmt.State, verb rune) {
 		case debugger:
 			debug := t.GetDebug()
 			for k, v := range debug {
-				fmt.Fprintf(s, "    %s = %v\n", k, v)
+				fmt.Fprintf(s, "    %s = %s\n", k, v)
 			}
 		case messenger:
 			fmt.Fprintf(s, "    message(%q)\n", t.GetMessage())
