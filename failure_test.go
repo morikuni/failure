@@ -17,7 +17,7 @@ const (
 )
 
 func TestFailure(t *testing.T) {
-	base := failure.New(TestCodeA, failure.Message("xxx"), failure.Debug{"zzz": true})
+	base := failure.New(TestCodeA, failure.Message("xxx"), failure.Debug{"zzz": "true"})
 	pkgErr := errors.New("yyy")
 	tests := map[string]struct {
 		err error
@@ -30,12 +30,12 @@ func TestFailure(t *testing.T) {
 		wantError     string
 	}{
 		"new": {
-			err: failure.New(TestCodeA, failure.Debug{"aaa": 1}),
+			err: failure.New(TestCodeA, failure.Debug{"aaa": "1"}),
 
 			shouldNil:     false,
 			wantCode:      TestCodeA,
 			wantMessage:   "",
-			wantDebugs:    []failure.Debug{{"aaa": 1}},
+			wantDebugs:    []failure.Debug{{"aaa": "1"}},
 			wantStackLine: 33,
 			wantError:     "failure_test.TestFailure: code(code_a)",
 		},
@@ -45,17 +45,17 @@ func TestFailure(t *testing.T) {
 			shouldNil:     false,
 			wantCode:      TestCodeB,
 			wantMessage:   "xxx",
-			wantDebugs:    []failure.Debug{{"zzz": true}},
+			wantDebugs:    []failure.Debug{{"zzz": "true"}},
 			wantStackLine: 20,
 			wantError:     "failure_test.TestFailure: code(1): failure_test.TestFailure: code(code_a)",
 		},
 		"overwrite": {
-			err: failure.Translate(base, TestCodeB, failure.Message("aaa"), failure.Debug{"bbb": 1}),
+			err: failure.Translate(base, TestCodeB, failure.Message("aaa"), failure.Debug{"bbb": "1"}),
 
 			shouldNil:     false,
 			wantCode:      TestCodeB,
 			wantMessage:   "aaa",
-			wantDebugs:    []failure.Debug{{"bbb": 1}, {"zzz": true}},
+			wantDebugs:    []failure.Debug{{"bbb": "1"}, {"zzz": "true"}},
 			wantStackLine: 20,
 			wantError:     "failure_test.TestFailure: code(1): failure_test.TestFailure: code(code_a)",
 		},
@@ -153,7 +153,7 @@ func TestFailure(t *testing.T) {
 
 func TestFailure_Format(t *testing.T) {
 	e1 := fmt.Errorf("yyy")
-	e2 := failure.Translate(e1, TestCodeA, failure.Message("xxx"), failure.Debug{"zzz": true})
+	e2 := failure.Translate(e1, TestCodeA, failure.Message("xxx"), failure.Debug{"zzz": "true"})
 	err := failure.Wrap(e2)
 
 	want := "failure_test.TestFailure_Format: failure_test.TestFailure_Format: code(code_a): yyy"
