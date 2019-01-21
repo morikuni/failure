@@ -51,9 +51,9 @@ func (w withMessage) GetMessage() string {
 }
 
 // MessageOf extracts the message from err.
-func MessageOf(err error) string {
+func MessageOf(err error) (string, bool) {
 	if err == nil {
-		return ""
+		return "", false
 	}
 
 	type messageGetter interface {
@@ -64,11 +64,11 @@ func MessageOf(err error) string {
 	for i.Next() {
 		err := i.Error()
 		if g, ok := err.(messageGetter); ok {
-			return g.GetMessage()
+			return g.GetMessage(), true
 		}
 	}
 
-	return ""
+	return "", false
 }
 
 // Debug is a key-value data appended to an error
@@ -147,9 +147,9 @@ func (w withCallStack) GetCallStack() CallStack {
 
 // CallStackOf extracts call stack from the error.
 // Returned call stack is for the most deepest place (appended first).
-func CallStackOf(err error) CallStack {
+func CallStackOf(err error) (CallStack, bool) {
 	if err == nil {
-		return nil
+		return nil, false
 	}
 
 	type callStackGetter interface {
@@ -171,7 +171,10 @@ func CallStackOf(err error) CallStack {
 		}
 	}
 
-	return last
+	if last == nil {
+		return nil, false
+	}
+	return last, true
 }
 
 // WithFormatter appends error formatter to an error.
@@ -249,7 +252,7 @@ func (f formatter) Format(s fmt.State, verb rune) {
 	}
 
 	fmt.Fprint(s, "[CallStack]\n")
-	if cs := CallStackOf(f); cs != nil {
+	if cs, ok := CallStackOf(f); ok {
 		for _, f := range cs.Frames() {
 			fmt.Fprintf(s, "    %+v\n", f)
 		}

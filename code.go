@@ -8,9 +8,10 @@ func Is(err error, codes ...Code) bool {
 		return false
 	}
 
-	c := CodeOf(err)
-	if c == nil {
-		return false
+	c, ok := CodeOf(err)
+	if !ok {
+		// continue process (don't return) to accept the case Is(err, nil).
+		c = nil
 	}
 
 	for i := range codes {

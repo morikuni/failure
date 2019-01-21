@@ -1,6 +1,7 @@
 package failure_test
 
 import (
+	"errors"
 	"testing"
 
 	"io"
@@ -64,4 +65,7 @@ func TestIs(t *testing.T) {
 	assert.False(t, failure.Is(nil, A, B))
 	assert.False(t, failure.Is(io.EOF, A, B))
 	assert.False(t, failure.Is(errA))
+
+	assert.True(t, failure.Is(nil, nil))
+	assert.True(t, failure.Is(errors.New("error"), nil))
 }
