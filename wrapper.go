@@ -33,17 +33,28 @@ func (f WrapperFunc) WrapError(err error) error {
 // Message appends error message to an error.
 func Message(msg string) Wrapper {
 	return WrapperFunc(func(err error) error {
-		return withMessage{err, msg}
+		return withMessage{msg, err}
+	})
+}
+
+// Messagef appends formatted error message to an error.
+func Messagef(format string, args ...interface{}) Wrapper {
+	return WrapperFunc(func(err error) error {
+		return withMessage{fmt.Sprintf(format, args...), err}
 	})
 }
 
 type withMessage struct {
-	error
-	message string
+	message    string
+	underlying error
+}
+
+func (w withMessage) Error() string {
+	return fmt.Sprintf("%s: %s", w.message, w.underlying.Error())
 }
 
 func (w withMessage) UnwrapError() error {
-	return w.error
+	return w.underlying
 }
 
 func (w withMessage) GetMessage() string {
