@@ -69,7 +69,7 @@ func Translate(err error, code Code, wrappers ...Wrapper) error {
 // Wrap wraps err with given wrappers, and automatically add
 // call stack and formatter.
 func Wrap(err error, wrappers ...Wrapper) error {
-	return Custom(err, append(wrappers, WithCallStackSkip(1), WithFormatter())...)
+	return Custom(Custom(err, wrappers...), WithFormatter(), WithCallStackSkip(1))
 }
 
 func newFailure(err error, code Code, wrappers []Wrapper) error {
@@ -77,7 +77,7 @@ func newFailure(err error, code Code, wrappers []Wrapper) error {
 		code,
 		err,
 	}
-	return Custom(f, append(wrappers, WithCallStackSkip(2), WithFormatter())...)
+	return Custom(Custom(f, wrappers...), WithFormatter(), WithCallStackSkip(2))
 }
 
 // Custom is the general error wrapping constructor.
@@ -86,8 +86,10 @@ func Custom(err error, wrappers ...Wrapper) error {
 	if err == nil {
 		return nil
 	}
-	for _, w := range wrappers {
-		err = w.WrapError(err)
+	// To process from left to right, iterate from the last one.
+	// Custom(errors.New("foo"), Message("aaa"), Message("bbb")) should be "aaa: bbb: foo".
+	for i := len(wrappers) - 1; i >= 0; i-- {
+		err = wrappers[i].WrapError(err)
 	}
 	return err
 }
