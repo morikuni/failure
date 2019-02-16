@@ -33,6 +33,7 @@ func CodeOf(err error) (Code, bool) {
 // New creates a error from error Code.
 func New(code Code, wrappers ...Wrapper) error {
 	return Custom(Custom(newFailure(code), wrappers...), WithFormatter(), WithCallStackSkip(1))
+	return Custom(Custom(NewFailure(code), wrappers...), WithFormatter(), WithCallStackSkip(1))
 }
 
 // Translate translates err to an error with given code.
@@ -62,7 +63,7 @@ func Custom(err error, wrappers ...Wrapper) error {
 	return err
 }
 
-func newFailure(code Code) Failure {
+func NewFailure(code Code) Failure {
 	return &withCode{code: code}
 }
 
