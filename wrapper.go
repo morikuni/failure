@@ -3,6 +3,7 @@ package failure
 import (
 	"bytes"
 	"fmt"
+	"sort"
 
 	"io"
 
@@ -94,8 +95,15 @@ type MessageKV map[string]string
 
 // WrapError implements the Wrapper interface.
 func (m MessageKV) WrapError(err error) error {
+	keys := make([]string, 0, len(m))
+	for k := range m {
+		keys = append(keys, k)
+	}
+	sort.Slice(keys, func(i, j int) bool { return keys[i] < keys[j] })
+
 	buf := &bytes.Buffer{}
-	for k, v := range m {
+	for _, k := range keys {
+		v := m[k]
 		if buf.Len() != 0 {
 			buf.WriteRune(' ')
 		}
