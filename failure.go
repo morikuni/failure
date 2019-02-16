@@ -32,7 +32,6 @@ func CodeOf(err error) (Code, bool) {
 
 // New creates a error from error Code.
 func New(code Code, wrappers ...Wrapper) error {
-	return Custom(Custom(newFailure(code), wrappers...), WithFormatter(), WithCallStackSkip(1))
 	return Custom(Custom(NewFailure(code), wrappers...), WithFormatter(), WithCallStackSkip(1))
 }
 
@@ -63,10 +62,13 @@ func Custom(err error, wrappers ...Wrapper) error {
 	return err
 }
 
+// NewFailure returns Failure without any wrappers.
 func NewFailure(code Code) Failure {
 	return &withCode{code: code}
 }
 
+// WithCode appends code to an error.
+// You don't have to use this directly, unless using function Custom.
 func WithCode(code Code) Wrapper {
 	return WrapperFunc(func(err error) error {
 		return &withCode{code, err}

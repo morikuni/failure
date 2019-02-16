@@ -128,6 +128,7 @@ func DebugsOf(err error) []Debug {
 
 // WithCallStackSkip appends call stack to an error
 // skipping top N of frames.
+// You don't have to use this directly, unless using function Custom.
 func WithCallStackSkip(skip int) Wrapper {
 	cs := Callers(skip + 1)
 	return WrapperFunc(func(err error) error {
@@ -193,6 +194,8 @@ func CallStackOf(err error) (CallStack, bool) {
 //     %v+: Print trace for each place, and deepest call stack.
 //     %#v: Print raw structure of the error.
 //     others (%s, %v): Same as err.Error().
+//
+// You don't have to use this directly, unless using function Custom.
 func WithFormatter() Wrapper {
 	return WrapperFunc(func(err error) error {
 		return formatter{err}
