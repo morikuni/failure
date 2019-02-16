@@ -1,6 +1,7 @@
 package failure
 
 import (
+	"bytes"
 	"fmt"
 
 	"io"
@@ -62,6 +63,7 @@ func (w withMessage) GetMessage() string {
 }
 
 // MessageOf extracts the message from err.
+// Message from MessageKV is not returned.
 func MessageOf(err error) (string, bool) {
 	if err == nil {
 		return "", false
@@ -82,48 +84,42 @@ func MessageOf(err error) (string, bool) {
 	return "", false
 }
 
-// Debug is a key-value data appended to an error
-// for debugging purpose.
-type Debug map[string]string
+// MessageKV is a key-value message appended to an error
+// for debugging purpose. You must not use this data as a part of
+// your application logic. Just print it.
+// If you want to extract MessageKV from error for printing purpose, you can create an
+// interface with method `GetMessageKV() MessageKV` and use it with
+// iterator, like other extraction function (e.g. MessageOf).
+type MessageKV map[string]string
 
 // WrapError implements the Wrapper interface.
-func (d Debug) WrapError(err error) error {
-	return withDebug{err, d}
-}
-
-type withDebug struct {
-	error
-	debug Debug
-}
-
-func (w withDebug) UnwrapError() error {
-	return w.error
-}
-
-func (w withDebug) GetDebug() Debug {
-	return w.debug
-}
-
-// DebugsOf extracts list of information from the error.
-func DebugsOf(err error) []Debug {
-	if err == nil {
-		return nil
-	}
-
-	type debugGetter interface {
-		GetDebug() Debug
-	}
-
-	var debugs []Debug
-	i := NewIterator(err)
-	for i.Next() {
-		err := i.Error()
-		if g, ok := err.(debugGetter); ok {
-			debugs = append(debugs, g.GetDebug())
+func (m MessageKV) WrapError(err error) error {
+	buf := &bytes.Buffer{}
+	for k, v := range m {
+		if buf.Len() != 0 {
+			buf.WriteRune(' ')
 		}
+		fmt.Fprintf(buf, "%s=%s", k, v)
 	}
+	return withMessageKV{m, buf.String(), err}
+}
 
-	return debugs
+type withMessageKV struct {
+	kv         MessageKV
+	memo       string
+	underlying error
+}
+
+func (m withMessageKV) Error() string {
+	return fmt.Sprintf("%s: %s", m.memo, m.underlying.Error())
+}
+
+func (m withMessageKV) UnwrapError() error {
+	return m.underlying
+}
+
+func (m withMessageKV) GetMessageKV() MessageKV {
+	return m.kv
 }
 
 // WithCallStackSkip appends call stack to an error
@@ -233,8 +229,8 @@ func (f formatter) Format(s fmt.State, verb rune) {
 	type callStacker interface {
 		GetCallStack() CallStack
 	}
-	type debugger interface {
-		GetDebug() Debug
+	type messageKVer interface {
+		GetMessageKV() MessageKV
 	}
 	type messenger interface {
 		GetMessage() string
@@ -249,9 +245,9 @@ func (f formatter) Format(s fmt.State, verb rune) {
 		switch t := err.(type) {
 		case callStacker:
 			fmt.Fprintf(s, "%+v\n", t.GetCallStack().HeadFrame())
-		case debugger:
-			debug := t.GetDebug()
-			for k, v := range debug {
+		case messageKVer:
+			kv := t.GetMessageKV()
+			for k, v := range kv {
 				fmt.Fprintf(s, "    %s = %s\n", k, v)
 			}
 		case messenger:
