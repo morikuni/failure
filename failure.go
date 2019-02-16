@@ -8,29 +8,9 @@ import (
 )
 
 // Failure represents an error with error code.
-type Failure struct {
-	code       Code
-	underlying error
-}
-
-// UnwrapError returns the underlying error.
-// It also implements the ErrorWrapper interface.
-func (f Failure) UnwrapError() error {
-	return f.underlying
-}
-
-// GetCode returns the error code of the error.
-func (f Failure) GetCode() Code {
-	return f.code
-}
-
-// Error implements the error interface.
-func (f Failure) Error() string {
-	msg := fmt.Sprintf("code(%s)", f.code.ErrorCode())
-	if f.underlying != nil {
-		msg = strings.Join([]string{msg, f.underlying.Error()}, ": ")
-	}
-	return msg
+type Failure interface {
+	error
+	GetCode() Code
 }
 
 // CodeOf extracts an error Code from the error.
@@ -39,45 +19,33 @@ func CodeOf(err error) (Code, bool) {
 		return nil, false
 	}
 
-	type codeGetter interface {
-		GetCode() Code
-	}
-
 	i := NewIterator(err)
 	for i.Next() {
 		err := i.Error()
-		if g, ok := err.(codeGetter); ok {
-			return g.GetCode(), true
+		if f, ok := err.(Failure); ok {
+			return f.GetCode(), true
 		}
 	}
 
 	return nil, false
 }
 
-// New creates a Failure from error Code.
+// New creates a error from error Code.
 func New(code Code, wrappers ...Wrapper) error {
-	return newFailure(nil, code, wrappers)
+	return Custom(Custom(newFailure(code), wrappers...), WithFormatter(), WithCallStackSkip(1))
 }
 
 // Translate translates err to an error with given code.
 // It wraps the error with given wrappers, and automatically
 // add call stack and formatter.
 func Translate(err error, code Code, wrappers ...Wrapper) error {
-	return newFailure(err, code, wrappers)
+	return Custom(Custom(Custom(err, WithCode(code)), wrappers...), WithFormatter(), WithCallStackSkip(1))
 }
 
 // Wrap wraps err with given wrappers, and automatically add
 // call stack and formatter.
 func Wrap(err error, wrappers ...Wrapper) error {
 	return Custom(Custom(err, wrappers...), WithFormatter(), WithCallStackSkip(1))
-}
-
-func newFailure(err error, code Code, wrappers []Wrapper) error {
-	f := Failure{
-		code,
-		err,
-	}
-	return Custom(Custom(f, wrappers...), WithFormatter(), WithCallStackSkip(2))
 }
 
 // Custom is the general error wrapping constructor.
@@ -92,4 +60,40 @@ func Custom(err error, wrappers ...Wrapper) error {
 		err = wrappers[i].WrapError(err)
 	}
 	return err
+}
+
+func newFailure(code Code) Failure {
+	return &withCode{code: code}
+}
+
+func WithCode(code Code) Wrapper {
+	return WrapperFunc(func(err error) error {
+		return &withCode{code, err}
+	})
+}
+
+type withCode struct {
+	code       Code
+	underlying error
+}
+
+var _ interface {
+	Failure
+	Unwrapper
+} = (*withCode)(nil)
+
+func (f *withCode) UnwrapError() error {
+	return f.underlying
+}
+
+func (f *withCode) GetCode() Code {
+	return f.code
+}
+
+func (f *withCode) Error() string {
+	msg := fmt.Sprintf("code(%s)", f.code.ErrorCode())
+	if f.underlying != nil {
+		msg = strings.Join([]string{msg, f.underlying.Error()}, ": ")
+	}
+	return msg
 }
