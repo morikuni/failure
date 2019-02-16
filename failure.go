@@ -4,7 +4,6 @@ package failure
 
 import (
 	"fmt"
-	"strings"
 )
 
 // Failure represents an error with error code.
@@ -94,9 +93,8 @@ func (f *withCode) GetCode() Code {
 }
 
 func (f *withCode) Error() string {
-	msg := fmt.Sprintf("code(%s)", f.code.ErrorCode())
-	if f.underlying != nil {
-		msg = strings.Join([]string{msg, f.underlying.Error()}, ": ")
+	if f.underlying == nil {
+		return fmt.Sprintf("code(%s)", f.code.ErrorCode())
 	}
-	return msg
+	return fmt.Sprintf("code(%s): %s", f.code.ErrorCode(), f.underlying)
 }

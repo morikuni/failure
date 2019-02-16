@@ -51,7 +51,7 @@ type withMessage struct {
 }
 
 func (w withMessage) Error() string {
-	return fmt.Sprintf("%s: %s", w.message, w.underlying.Error())
+	return fmt.Sprintf("%s: %s", w.message, w.underlying)
 }
 
 func (w withMessage) UnwrapError() error {
@@ -111,7 +111,7 @@ type withMessageKV struct {
 }
 
 func (m withMessageKV) Error() string {
-	return fmt.Sprintf("%s: %s", m.memo, m.underlying.Error())
+	return fmt.Sprintf("%s: %s", m.memo, m.underlying)
 }
 
 func (m withMessageKV) UnwrapError() error {
@@ -129,24 +129,24 @@ func WithCallStackSkip(skip int) Wrapper {
 	cs := Callers(skip + 1)
 	return WrapperFunc(func(err error) error {
 		return withCallStack{
-			err,
 			cs,
+			err,
 		}
 	})
 }
 
 type withCallStack struct {
-	err       error
-	callStack CallStack
+	callStack  CallStack
+	underlying error
 }
 
 func (w withCallStack) Error() string {
 	head := w.callStack.HeadFrame()
-	return fmt.Sprintf("%s.%s: %s", head.Pkg(), head.Func(), w.err.Error())
+	return fmt.Sprintf("%s.%s: %s", head.Pkg(), head.Func(), w.underlying)
 }
 
 func (w withCallStack) UnwrapError() error {
-	return w.err
+	return w.underlying
 }
 
 func (w withCallStack) GetCallStack() CallStack {
