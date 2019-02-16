@@ -50,14 +50,14 @@ func TestFailure(t *testing.T) {
 			wantError:     "failure_test.TestFailure: code(1): failure_test.TestFailure: xxx: code(code_a)",
 		},
 		"overwrite": {
-			err: failure.Translate(base, TestCodeB, failure.Message("aaa"), failure.Debug{"bbb": "1"}),
+			err: failure.Translate(base, TestCodeB, failure.Messagef("aaa: %s", "bbb"), failure.Debug{"bbb": "1"}),
 
 			shouldNil:     false,
 			wantCode:      TestCodeB,
-			wantMessage:   "aaa",
+			wantMessage:   "aaa: bbb",
 			wantDebugs:    []failure.Debug{{"bbb": "1"}, {"zzz": "true"}},
 			wantStackLine: 20,
-			wantError:     "failure_test.TestFailure: aaa: code(1): failure_test.TestFailure: xxx: code(code_a)",
+			wantError:     "failure_test.TestFailure: aaa: bbb: code(1): failure_test.TestFailure: xxx: code(code_a)",
 		},
 		"wrap": {
 			err: failure.Wrap(io.EOF),
