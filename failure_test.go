@@ -150,11 +150,11 @@ func TestFailure(t *testing.T) {
 }
 
 func TestFailure_Format(t *testing.T) {
-	e1 := failure.Fundamental("yyy")
+	e1 := fmt.Errorf("yyy")
 	e2 := failure.Translate(e1, TestCodeA, failure.Message("xxx"), failure.MessageKV{"zzz": "true"})
 	err := failure.Wrap(e2)
 
-	want := "failure_test.TestFailure_Format: failure_test.TestFailure_Format: xxx: zzz=true: code(code_a): failure_test.TestFailure_Format: yyy"
+	want := "failure_test.TestFailure_Format: failure_test.TestFailure_Format: xxx: zzz=true: code(code_a): yyy"
 	assert.Equal(t, want, fmt.Sprintf("%s", err))
 	assert.Equal(t, want, fmt.Sprintf("%v", err))
 
@@ -166,10 +166,9 @@ func TestFailure_Format(t *testing.T) {
     message\("xxx"\)
     zzz = true
     code\(code_a\)
-\[failure_test.TestFailure_Format\] /.*/github.com/morikuni/failure/failure_test.go:153
-    message\("yyy"\)
+    \*errors.errorString\("yyy"\)
 \[CallStack\]
-    \[failure_test.TestFailure_Format\] /.*/github.com/morikuni/failure/failure_test.go:153
+    \[failure_test.TestFailure_Format\] /.*/github.com/morikuni/failure/failure_test.go:154
     \[.*`
 	assert.Regexp(t, exp, fmt.Sprintf("%+v", err))
 }
