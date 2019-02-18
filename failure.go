@@ -62,6 +62,8 @@ func Custom(err error, wrappers ...Wrapper) error {
 }
 
 // NewFailure returns Failure without any wrappers.
+// You don't have to use this directly, unless using function Custom.
+// Probably, you can use New instead of this.
 func NewFailure(code Code) Failure {
 	return &withCode{code: code}
 }
