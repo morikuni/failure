@@ -100,6 +100,15 @@ func TestFailure(t *testing.T) {
 			wantStackLine: 0,
 			wantError:     io.EOF.Error(),
 		},
+		"fundamental": {
+			err: failure.Fundamental("fundamental error", failure.MessageKV{"aaa": "1"}),
+
+			shouldNil:     false,
+			wantCode:      nil,
+			wantMessage:   "fundamental error",
+			wantStackLine: 104,
+			wantError:     "failure_test.TestFailure: aaa=1: fundamental error",
+		},
 	}
 
 	for title, test := range tests {
@@ -141,25 +150,26 @@ func TestFailure(t *testing.T) {
 }
 
 func TestFailure_Format(t *testing.T) {
-	e1 := fmt.Errorf("yyy")
+	e1 := failure.Fundamental("yyy")
 	e2 := failure.Translate(e1, TestCodeA, failure.Message("xxx"), failure.MessageKV{"zzz": "true"})
 	err := failure.Wrap(e2)
 
-	want := "failure_test.TestFailure_Format: failure_test.TestFailure_Format: xxx: zzz=true: code(code_a): yyy"
+	want := "failure_test.TestFailure_Format: failure_test.TestFailure_Format: xxx: zzz=true: code(code_a): failure_test.TestFailure_Format: yyy"
 	assert.Equal(t, want, fmt.Sprintf("%s", err))
 	assert.Equal(t, want, fmt.Sprintf("%v", err))
 
 	exp := `failure.formatter{error:failure.withCallStack{.*`
 	assert.Regexp(t, exp, fmt.Sprintf("%#v", err))
 
-	exp = `\[failure_test.TestFailure_Format\] /.*/github.com/morikuni/failure/failure_test.go:146
-\[failure_test.TestFailure_Format\] /.*/github.com/morikuni/failure/failure_test.go:145
+	exp = `\[failure_test.TestFailure_Format\] /.*/github.com/morikuni/failure/failure_test.go:155
+\[failure_test.TestFailure_Format\] /.*/github.com/morikuni/failure/failure_test.go:154
     message\("xxx"\)
     zzz = true
     code\(code_a\)
-    \*errors.errorString\("yyy"\)
+\[failure_test.TestFailure_Format\] /.*/github.com/morikuni/failure/failure_test.go:153
+    message\("yyy"\)
 \[CallStack\]
-    \[failure_test.TestFailure_Format\] /.*/github.com/morikuni/failure/failure_test.go:145
+    \[failure_test.TestFailure_Format\] /.*/github.com/morikuni/failure/failure_test.go:153
     \[.*`
 	assert.Regexp(t, exp, fmt.Sprintf("%+v", err))
 }

@@ -29,7 +29,7 @@ func CodeOf(err error) (Code, bool) {
 	return nil, false
 }
 
-// New creates a error from error Code.
+// New creates an error from error Code.
 func New(code Code, wrappers ...Wrapper) error {
 	return Custom(Custom(NewFailure(code), wrappers...), WithFormatter(), WithCallStackSkip(1))
 }
@@ -59,6 +59,22 @@ func Custom(err error, wrappers ...Wrapper) error {
 		err = wrappers[i].WrapError(err)
 	}
 	return err
+}
+
+type fundamental string
+
+func (e fundamental) Error() string {
+	return string(e)
+}
+
+func (e fundamental) GetMessage() string {
+	return string(e)
+}
+
+// Fundamental creates an error from string without error code.
+// The returned error should be kind of internal or unknown error.
+func Fundamental(msg string, wrappers ...Wrapper) error {
+	return Custom(Custom(fundamental(msg), wrappers...), WithFormatter(), WithCallStackSkip(1))
 }
 
 // NewFailure returns Failure without any wrappers.
