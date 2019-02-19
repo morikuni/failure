@@ -72,7 +72,7 @@ func GetACL(projectID, userID string) (acl interface{}, e error) {
 			failure.MessageKV{"project_id": projectID, "user_id": userID},
 		)
 	}
-	err := errors.New("error")
+	err := failure.Unexpected("unexpected error")
 	if err != nil {
 		return nil, failure.Wrap(err)
 	}

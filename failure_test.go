@@ -100,14 +100,14 @@ func TestFailure(t *testing.T) {
 			wantStackLine: 0,
 			wantError:     io.EOF.Error(),
 		},
-		"fundamental": {
-			err: failure.Fundamental("fundamental error", failure.MessageKV{"aaa": "1"}),
+		"unexpected": {
+			err: failure.Unexpected("unexpected error", failure.MessageKV{"aaa": "1"}),
 
 			shouldNil:     false,
 			wantCode:      nil,
-			wantMessage:   "fundamental error",
+			wantMessage:   "unexpected error",
 			wantStackLine: 104,
-			wantError:     "failure_test.TestFailure: aaa=1: fundamental error",
+			wantError:     "failure_test.TestFailure: aaa=1: unexpected error",
 		},
 	}
 

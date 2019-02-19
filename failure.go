@@ -61,20 +61,20 @@ func Custom(err error, wrappers ...Wrapper) error {
 	return err
 }
 
-type fundamental string
+type unexpected string
 
-func (e fundamental) Error() string {
+func (e unexpected) Error() string {
 	return string(e)
 }
 
-func (e fundamental) GetMessage() string {
+func (e unexpected) GetMessage() string {
 	return string(e)
 }
 
-// Fundamental creates an error from string without error code.
+// Unexpected creates an error from message without error code.
 // The returned error should be kind of internal or unknown error.
-func Fundamental(msg string, wrappers ...Wrapper) error {
-	return Custom(Custom(fundamental(msg), wrappers...), WithFormatter(), WithCallStackSkip(1))
+func Unexpected(msg string, wrappers ...Wrapper) error {
+	return Custom(Custom(unexpected(msg), wrappers...), WithFormatter(), WithCallStackSkip(1))
 }
 
 // NewFailure returns Failure without any wrappers.
