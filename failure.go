@@ -12,7 +12,7 @@ type Failure interface {
 	GetCode() Code
 }
 
-// CodeOf extracts an error Code from the error.
+// CodeOf extracts an error code from the error.
 func CodeOf(err error) (Code, bool) {
 	if err == nil {
 		return nil, false
@@ -29,7 +29,7 @@ func CodeOf(err error) (Code, bool) {
 	return nil, false
 }
 
-// New creates an error from error Code.
+// New creates an error from error code.
 func New(code Code, wrappers ...Wrapper) error {
 	return Custom(Custom(NewFailure(code), wrappers...), WithFormatter(), WithCallStackSkip(1))
 }
