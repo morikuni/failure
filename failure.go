@@ -4,80 +4,47 @@ package failure
 
 import (
 	"fmt"
-	"strings"
 )
 
 // Failure represents an error with error code.
-type Failure struct {
-	code       Code
-	underlying error
+type Failure interface {
+	error
+	GetCode() Code
 }
 
-// UnwrapError returns the underlying error.
-// It also implements the ErrorWrapper interface.
-func (f Failure) UnwrapError() error {
-	return f.underlying
-}
-
-// GetCode returns the error code of the error.
-func (f Failure) GetCode() Code {
-	return f.code
-}
-
-// Error implements the error interface.
-func (f Failure) Error() string {
-	msg := fmt.Sprintf("code(%s)", f.code.ErrorCode())
-	if f.underlying != nil {
-		msg = strings.Join([]string{msg, f.underlying.Error()}, ": ")
-	}
-	return msg
-}
-
-// CodeOf extracts an error Code from the error.
+// CodeOf extracts an error code from the error.
 func CodeOf(err error) (Code, bool) {
 	if err == nil {
 		return nil, false
 	}
 
-	type codeGetter interface {
-		GetCode() Code
-	}
-
 	i := NewIterator(err)
 	for i.Next() {
 		err := i.Error()
-		if g, ok := err.(codeGetter); ok {
-			return g.GetCode(), true
+		if f, ok := err.(Failure); ok {
+			return f.GetCode(), true
 		}
 	}
 
 	return nil, false
 }
 
-// New creates a Failure from error Code.
+// New creates an error from error code.
 func New(code Code, wrappers ...Wrapper) error {
-	return newFailure(nil, code, wrappers)
+	return Custom(Custom(NewFailure(code), wrappers...), WithFormatter(), WithCallStackSkip(1))
 }
 
 // Translate translates err to an error with given code.
 // It wraps the error with given wrappers, and automatically
 // add call stack and formatter.
 func Translate(err error, code Code, wrappers ...Wrapper) error {
-	return newFailure(err, code, wrappers)
+	return Custom(Custom(Custom(err, WithCode(code)), wrappers...), WithFormatter(), WithCallStackSkip(1))
 }
 
 // Wrap wraps err with given wrappers, and automatically add
 // call stack and formatter.
 func Wrap(err error, wrappers ...Wrapper) error {
-	return Custom(err, append(wrappers, WithCallStackSkip(1), WithFormatter())...)
-}
-
-func newFailure(err error, code Code, wrappers []Wrapper) error {
-	f := Failure{
-		code,
-		err,
-	}
-	return Custom(f, append(wrappers, WithCallStackSkip(2), WithFormatter())...)
+	return Custom(Custom(err, wrappers...), WithFormatter(), WithCallStackSkip(1))
 }
 
 // Custom is the general error wrapping constructor.
@@ -86,8 +53,66 @@ func Custom(err error, wrappers ...Wrapper) error {
 	if err == nil {
 		return nil
 	}
-	for _, w := range wrappers {
-		err = w.WrapError(err)
+	// To process from left to right, iterate from the last one.
+	// Custom(errors.New("foo"), Message("aaa"), Message("bbb")) should be "aaa: bbb: foo".
+	for i := len(wrappers) - 1; i >= 0; i-- {
+		err = wrappers[i].WrapError(err)
 	}
 	return err
+}
+
+type unexpected string
+
+func (e unexpected) Error() string {
+	return string(e)
+}
+
+func (e unexpected) GetMessage() string {
+	return string(e)
+}
+
+// Unexpected creates an error from message without error code.
+// The returned error should be kind of internal or unknown error.
+func Unexpected(msg string, wrappers ...Wrapper) error {
+	return Custom(Custom(unexpected(msg), wrappers...), WithFormatter(), WithCallStackSkip(1))
+}
+
+// NewFailure returns Failure without any wrappers.
+// You don't have to use this directly, unless using function Custom.
+// Probably, you can use New instead of this.
+func NewFailure(code Code) Failure {
+	return &withCode{code: code}
+}
+
+// WithCode appends code to an error.
+// You don't have to use this directly, unless using function Custom.
+func WithCode(code Code) Wrapper {
+	return WrapperFunc(func(err error) error {
+		return &withCode{code, err}
+	})
+}
+
+type withCode struct {
+	code       Code
+	underlying error
+}
+
+var _ interface {
+	Failure
+	Unwrapper
+} = (*withCode)(nil)
+
+func (f *withCode) UnwrapError() error {
+	return f.underlying
+}
+
+func (f *withCode) GetCode() Code {
+	return f.code
+}
+
+func (f *withCode) Error() string {
+	if f.underlying == nil {
+		return fmt.Sprintf("code(%s)", f.code.ErrorCode())
+	}
+	return fmt.Sprintf("code(%s): %s", f.code.ErrorCode(), f.underlying)
 }

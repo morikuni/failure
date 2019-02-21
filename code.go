@@ -22,13 +22,10 @@ func Is(err error, codes ...Code) bool {
 	return false
 }
 
-// Code represents an error Code.
-// The code should not have internal state, so it should be
-// defined as a variable.
-// StringCode or IntCode are recommended if you don't need
-// custom behavior on the code.
+// Code represents an error code of the error.
+// The code should be able to be compared by == operator.
 type Code interface {
-	// ErrorCode returns an error Code in string representation.
+	// ErrorCode returns an error code in string representation.
 	ErrorCode() string
 }
 
@@ -40,7 +37,7 @@ func (c StringCode) ErrorCode() string {
 	return string(c)
 }
 
-// IntCode represents an error Code in int64.
+// IntCode represents an error code in int64.
 type IntCode int64
 
 // ErrorCode implements the Code interface.

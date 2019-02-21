@@ -1,7 +1,9 @@
 package failure
 
 import (
+	"bytes"
 	"fmt"
+	"sort"
 
 	"io"
 
@@ -33,17 +35,28 @@ func (f WrapperFunc) WrapError(err error) error {
 // Message appends error message to an error.
 func Message(msg string) Wrapper {
 	return WrapperFunc(func(err error) error {
-		return withMessage{err, msg}
+		return withMessage{msg, err}
+	})
+}
+
+// Messagef appends formatted error message to an error.
+func Messagef(format string, args ...interface{}) Wrapper {
+	return WrapperFunc(func(err error) error {
+		return withMessage{fmt.Sprintf(format, args...), err}
 	})
 }
 
 type withMessage struct {
-	error
-	message string
+	message    string
+	underlying error
+}
+
+func (w withMessage) Error() string {
+	return fmt.Sprintf("%s: %s", w.message, w.underlying)
 }
 
 func (w withMessage) UnwrapError() error {
-	return w.error
+	return w.underlying
 }
 
 func (w withMessage) GetMessage() string {
@@ -51,6 +64,7 @@ func (w withMessage) GetMessage() string {
 }
 
 // MessageOf extracts the message from err.
+// Message from MessageKV is not returned.
 func MessageOf(err error) (string, bool) {
 	if err == nil {
 		return "", false
@@ -71,74 +85,76 @@ func MessageOf(err error) (string, bool) {
 	return "", false
 }
 
-// Debug is a key-value data appended to an error
-// for debugging purpose.
-type Debug map[string]string
+// MessageKV is a key-value message appended to an error
+// for debugging purpose. You must not use this data as a part of
+// your application logic. Just print it.
+// If you want to extract MessageKV from error for printing purpose, you can create an
+// interface with method `GetMessageKV() MessageKV` and use it with
+// iterator, like other extraction function (e.g. MessageOf).
+type MessageKV map[string]string
 
 // WrapError implements the Wrapper interface.
-func (d Debug) WrapError(err error) error {
-	return withDebug{err, d}
-}
-
-type withDebug struct {
-	error
-	debug Debug
-}
-
-func (w withDebug) UnwrapError() error {
-	return w.error
-}
-
-func (w withDebug) GetDebug() Debug {
-	return w.debug
-}
-
-// DebugsOf extracts list of information from the error.
-func DebugsOf(err error) []Debug {
-	if err == nil {
-		return nil
+func (m MessageKV) WrapError(err error) error {
+	keys := make([]string, 0, len(m))
+	for k := range m {
+		keys = append(keys, k)
 	}
+	sort.Slice(keys, func(i, j int) bool { return keys[i] < keys[j] })
 
-	type debugGetter interface {
-		GetDebug() Debug
-	}
-
-	var debugs []Debug
-	i := NewIterator(err)
-	for i.Next() {
-		err := i.Error()
-		if g, ok := err.(debugGetter); ok {
-			debugs = append(debugs, g.GetDebug())
+	buf := &bytes.Buffer{}
+	for _, k := range keys {
+		v := m[k]
+		if buf.Len() != 0 {
+			buf.WriteRune(' ')
 		}
+		fmt.Fprintf(buf, "%s=%s", k, v)
 	}
+	return withMessageKV{m, buf.String(), err}
+}
 
-	return debugs
+type withMessageKV struct {
+	kv         MessageKV
+	memo       string
+	underlying error
+}
+
+func (m withMessageKV) Error() string {
+	return fmt.Sprintf("%s: %s", m.memo, m.underlying)
+}
+
+func (m withMessageKV) UnwrapError() error {
+	return m.underlying
+}
+
+func (m withMessageKV) GetMessageKV() MessageKV {
+	return m.kv
 }
 
 // WithCallStackSkip appends call stack to an error
 // skipping top N of frames.
+// You don't have to use this directly, unless using function Custom.
 func WithCallStackSkip(skip int) Wrapper {
 	cs := Callers(skip + 1)
 	return WrapperFunc(func(err error) error {
 		return withCallStack{
-			err,
 			cs,
+			err,
 		}
 	})
 }
 
 type withCallStack struct {
-	err       error
-	callStack CallStack
+	callStack  CallStack
+	underlying error
 }
 
 func (w withCallStack) Error() string {
 	head := w.callStack.HeadFrame()
-	return fmt.Sprintf("%s.%s: %s", head.Pkg(), head.Func(), w.err.Error())
+	return fmt.Sprintf("%s.%s: %s", head.Pkg(), head.Func(), w.underlying)
 }
 
 func (w withCallStack) UnwrapError() error {
-	return w.err
+	return w.underlying
 }
 
 func (w withCallStack) GetCallStack() CallStack {
@@ -182,6 +198,8 @@ func CallStackOf(err error) (CallStack, bool) {
 //     %v+: Print trace for each place, and deepest call stack.
 //     %#v: Print raw structure of the error.
 //     others (%s, %v): Same as err.Error().
+//
+// You don't have to use this directly, unless using function Custom.
 func WithFormatter() Wrapper {
 	return WrapperFunc(func(err error) error {
 		return formatter{err}
@@ -219,8 +237,8 @@ func (f formatter) Format(s fmt.State, verb rune) {
 	type callStacker interface {
 		GetCallStack() CallStack
 	}
-	type debugger interface {
-		GetDebug() Debug
+	type messageKVer interface {
+		GetMessageKV() MessageKV
 	}
 	type messenger interface {
 		GetMessage() string
@@ -235,9 +253,9 @@ func (f formatter) Format(s fmt.State, verb rune) {
 		switch t := err.(type) {
 		case callStacker:
 			fmt.Fprintf(s, "%+v\n", t.GetCallStack().HeadFrame())
-		case debugger:
-			debug := t.GetDebug()
-			for k, v := range debug {
+		case messageKVer:
+			kv := t.GetMessageKV()
+			for k, v := range kv {
 				fmt.Fprintf(s, "    %s = %s\n", k, v)
 			}
 		case messenger:

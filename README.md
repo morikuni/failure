@@ -61,18 +61,18 @@ import (
 
 // error codes for your application.
 const (
-	NotFound  failure.StringCode = "not_found"
-	Forbidden failure.StringCode = "forbidden"
+	NotFound  failure.StringCode = "NotFound"
+	Forbidden failure.StringCode = "Forbidden"
 )
 
 func GetACL(projectID, userID string) (acl interface{}, e error) {
 	notFound := true
 	if notFound {
 		return nil, failure.New(NotFound,
-			failure.Debug{"project_id": projectID, "user_id": userID},
+			failure.MessageKV{"project_id": projectID, "user_id": userID},
 		)
 	}
-	err := errors.New("error")
+	err := failure.Unexpected("unexpected error")
 	if err != nil {
 		return nil, failure.Wrap(err)
 	}
@@ -84,8 +84,8 @@ func GetProject(projectID, userID string) (project interface{}, e error) {
 	if err != nil {
 		if failure.Is(err, NotFound) {
 			return nil, failure.Translate(err, Forbidden,
-				failure.Message("You have no grant to access the project."),
-				failure.Debug{"additional_info": "hello"},
+				failure.Message("no acl exists"),
+				failure.MessageKV{"additional_info": "hello"},
 			)
 		}
 		return nil, failure.Wrap(err)
@@ -129,16 +129,16 @@ func HandleError(w http.ResponseWriter, err error) {
 	io.WriteString(w, getMessage(err))
 
 	fmt.Println(err)
-	// main.GetProject: code(forbidden): main.GetACL: code(not_found)
+	// main.GetProject: no acl exists: additional_info=hello: code(Forbidden): main.GetACL: project_id=123 user_id=456: code(NotFound)
 	fmt.Printf("%+v\n", err)
 	// [main.GetProject] /go/src/github.com/morikuni/failure/example/main.go:36
+	//     message("no acl exists")
 	//     additional_info = hello
-	//     message("You have no grant to access the project.")
-	//     code(forbidden)
+	//     code(Forbidden)
 	// [main.GetACL] /go/src/github.com/morikuni/failure/example/main.go:21
-	//     project_id =
-	//     user_id =
-	//     code(not_found)
+	//     project_id = 123
+	//     user_id = 456
+	//     code(NotFound)
 	// [CallStack]
 	//     [main.GetACL] /go/src/github.com/morikuni/failure/example/main.go:21
 	//     [main.GetProject] /go/src/github.com/morikuni/failure/example/main.go:33
@@ -149,26 +149,25 @@ func HandleError(w http.ResponseWriter, err error) {
 	//     [http.(*conn).serve] /usr/local/go/src/net/http/server.go:1847
 	//     [runtime.goexit] /usr/local/go/src/runtime/asm_amd64.s:1333
 	fmt.Println(failure.CodeOf(err))
-	// forbidden
+	// Forbidden true
 	fmt.Println(failure.MessageOf(err))
-	// You have no grant to access the project.
-	fmt.Println(failure.DebugsOf(err))
-	// [map[additional_info:hello] map[project_id:123 user_id:456]]
+	// no acl exists true
 	fmt.Println(failure.CallStackOf(err))
-	// main.GetACL: main.GetProject: main.Handler: http.HandlerFunc.ServeHTTP: http.(*ServeMux).ServeHTTP: http.serverHandler.ServeHTTP: http.(*conn).serve: goexit
+	// main.GetACL: main.GetProject: main.Handler: http.HandlerFunc.ServeHTTP: http.(*ServeMux).ServeHTTP: http.serverHandler.ServeHTTP: http.(*conn).serve: goexit true
 	fmt.Println(failure.CauseOf(err))
-	// code(not_found)
+	// code(NotFound)
 }
 
 func main() {
 	http.HandleFunc("/", Handler)
 	http.ListenAndServe(":8080", nil)
 	// $ http "localhost:8080/?projectID=123&userID=456"
-	// HTTP/1.1 403 Forbidden
-	// Content-Length: 40
-	// Content-Type: text/plain; charset=utf-8
-	// Date: Tue, 19 Jun 2018 02:56:32 GMT
 	//
-	// You have no grant to access the project.
+	// HTTP/1.1 403 Forbidden
+	// Content-Length: 13
+	// Content-Type: text/plain; charset=utf-8
+	// Date: Sat, 16 Feb 2019 14:02:30 GMT
+	//
+	// no acl exists
 }
 ```

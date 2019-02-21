@@ -17,7 +17,7 @@ const (
 )
 
 func TestFailure(t *testing.T) {
-	base := failure.New(TestCodeA, failure.Message("xxx"), failure.Debug{"zzz": "true"})
+	base := failure.New(TestCodeA, failure.Message("xxx"), failure.MessageKV{"zzz": "true"})
 	pkgErr := errors.New("yyy")
 	tests := map[string]struct {
 		err error
@@ -25,19 +25,17 @@ func TestFailure(t *testing.T) {
 		shouldNil     bool
 		wantCode      failure.Code
 		wantMessage   string
-		wantDebugs    []failure.Debug
 		wantStackLine int
 		wantError     string
 	}{
 		"new": {
-			err: failure.New(TestCodeA, failure.Debug{"aaa": "1"}),
+			err: failure.New(TestCodeA, failure.MessageKV{"aaa": "1"}),
 
 			shouldNil:     false,
 			wantCode:      TestCodeA,
 			wantMessage:   "",
-			wantDebugs:    []failure.Debug{{"aaa": "1"}},
-			wantStackLine: 33,
-			wantError:     "failure_test.TestFailure: code(code_a)",
+			wantStackLine: 32,
+			wantError:     "failure_test.TestFailure: aaa=1: code(code_a)",
 		},
 		"translate": {
 			err: failure.Translate(base, TestCodeB),
@@ -45,19 +43,17 @@ func TestFailure(t *testing.T) {
 			shouldNil:     false,
 			wantCode:      TestCodeB,
 			wantMessage:   "xxx",
-			wantDebugs:    []failure.Debug{{"zzz": "true"}},
 			wantStackLine: 20,
-			wantError:     "failure_test.TestFailure: code(1): failure_test.TestFailure: code(code_a)",
+			wantError:     "failure_test.TestFailure: code(1): failure_test.TestFailure: xxx: zzz=true: code(code_a)",
 		},
 		"overwrite": {
-			err: failure.Translate(base, TestCodeB, failure.Message("aaa"), failure.Debug{"bbb": "1"}),
+			err: failure.Translate(base, TestCodeB, failure.Messagef("aaa: %s", "bbb"), failure.MessageKV{"ccc": "1", "ddd": "2"}),
 
 			shouldNil:     false,
 			wantCode:      TestCodeB,
-			wantMessage:   "aaa",
-			wantDebugs:    []failure.Debug{{"bbb": "1"}, {"zzz": "true"}},
+			wantMessage:   "aaa: bbb",
 			wantStackLine: 20,
-			wantError:     "failure_test.TestFailure: code(1): failure_test.TestFailure: code(code_a)",
+			wantError:     "failure_test.TestFailure: aaa: bbb: ccc=1 ddd=2: code(1): failure_test.TestFailure: xxx: zzz=true: code(code_a)",
 		},
 		"wrap": {
 			err: failure.Wrap(io.EOF),
@@ -65,8 +61,7 @@ func TestFailure(t *testing.T) {
 			shouldNil:     false,
 			wantCode:      nil,
 			wantMessage:   "",
-			wantDebugs:    nil,
-			wantStackLine: 63,
+			wantStackLine: 59,
 			wantError:     "failure_test.TestFailure: " + io.EOF.Error(),
 		},
 		"wrap nil": {
@@ -75,7 +70,6 @@ func TestFailure(t *testing.T) {
 			shouldNil:     true,
 			wantCode:      nil,
 			wantMessage:   "",
-			wantDebugs:    nil,
 			wantStackLine: 0,
 			wantError:     "",
 		},
@@ -85,9 +79,8 @@ func TestFailure(t *testing.T) {
 			shouldNil:     false,
 			wantCode:      TestCodeB,
 			wantMessage:   "aaa",
-			wantDebugs:    nil,
 			wantStackLine: 21,
-			wantError:     "failure_test.TestFailure: code(1): yyy",
+			wantError:     "failure_test.TestFailure: aaa: code(1): yyy",
 		},
 		"nil": {
 			err: nil,
@@ -95,7 +88,6 @@ func TestFailure(t *testing.T) {
 			shouldNil:     true,
 			wantCode:      nil,
 			wantMessage:   "",
-			wantDebugs:    nil,
 			wantStackLine: 0,
 			wantError:     "",
 		},
@@ -105,9 +97,17 @@ func TestFailure(t *testing.T) {
 			shouldNil:     false,
 			wantCode:      nil,
 			wantMessage:   "",
-			wantDebugs:    nil,
 			wantStackLine: 0,
 			wantError:     io.EOF.Error(),
+		},
+		"unexpected": {
+			err: failure.Unexpected("unexpected error", failure.MessageKV{"aaa": "1"}),
+
+			shouldNil:     false,
+			wantCode:      nil,
+			wantMessage:   "unexpected error",
+			wantStackLine: 104,
+			wantError:     "failure_test.TestFailure: aaa=1: unexpected error",
 		},
 	}
 
@@ -126,8 +126,6 @@ func TestFailure(t *testing.T) {
 			msg, ok := failure.MessageOf(test.err)
 			assert.Equal(t, test.wantMessage != "", ok)
 			assert.Equal(t, test.wantMessage, msg)
-
-			assert.Equal(t, test.wantDebugs, failure.DebugsOf(test.err))
 
 			if test.wantError != "" {
 				assert.EqualError(t, test.err, test.wantError)
@@ -153,24 +151,24 @@ func TestFailure(t *testing.T) {
 
 func TestFailure_Format(t *testing.T) {
 	e1 := fmt.Errorf("yyy")
-	e2 := failure.Translate(e1, TestCodeA, failure.Message("xxx"), failure.Debug{"zzz": "true"})
+	e2 := failure.Translate(e1, TestCodeA, failure.Message("xxx"), failure.MessageKV{"zzz": "true"})
 	err := failure.Wrap(e2)
 
-	want := "failure_test.TestFailure_Format: failure_test.TestFailure_Format: code(code_a): yyy"
+	want := "failure_test.TestFailure_Format: failure_test.TestFailure_Format: xxx: zzz=true: code(code_a): yyy"
 	assert.Equal(t, want, fmt.Sprintf("%s", err))
 	assert.Equal(t, want, fmt.Sprintf("%v", err))
 
 	exp := `failure.formatter{error:failure.withCallStack{.*`
 	assert.Regexp(t, exp, fmt.Sprintf("%#v", err))
 
-	exp = `\[failure_test.TestFailure_Format\] /.*/github.com/morikuni/failure/failure_test.go:157
-\[failure_test.TestFailure_Format\] /.*/github.com/morikuni/failure/failure_test.go:156
-    zzz = true
+	exp = `\[failure_test.TestFailure_Format\] /.*/github.com/morikuni/failure/failure_test.go:155
+\[failure_test.TestFailure_Format\] /.*/github.com/morikuni/failure/failure_test.go:154
     message\("xxx"\)
+    zzz = true
     code\(code_a\)
     \*errors.errorString\("yyy"\)
 \[CallStack\]
-    \[failure_test.TestFailure_Format\] /.*/github.com/morikuni/failure/failure_test.go:156
+    \[failure_test.TestFailure_Format\] /.*/github.com/morikuni/failure/failure_test.go:154
     \[.*`
 	assert.Regexp(t, exp, fmt.Sprintf("%+v", err))
 }
