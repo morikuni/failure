@@ -158,7 +158,7 @@ func TestFailure_Format(t *testing.T) {
 	assert.Equal(t, want, fmt.Sprintf("%s", err))
 	assert.Equal(t, want, fmt.Sprintf("%v", err))
 
-	exp := `failure.formatter{error:failure.withCallStack{.*`
+	exp := `&failure.formatter{error:\(\*failure.withCallStack\)\(.*`
 	assert.Regexp(t, exp, fmt.Sprintf("%#v", err))
 
 	exp = `\[failure_test.TestFailure_Format\] /.*/github.com/morikuni/failure/failure_test.go:155
