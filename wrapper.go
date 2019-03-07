@@ -35,14 +35,14 @@ func (f WrapperFunc) WrapError(err error) error {
 // Message appends error message to an error.
 func Message(msg string) Wrapper {
 	return WrapperFunc(func(err error) error {
-		return withMessage{msg, err}
+		return &withMessage{msg, err}
 	})
 }
 
 // Messagef appends formatted error message to an error.
 func Messagef(format string, args ...interface{}) Wrapper {
 	return WrapperFunc(func(err error) error {
-		return withMessage{fmt.Sprintf(format, args...), err}
+		return &withMessage{fmt.Sprintf(format, args...), err}
 	})
 }
 
@@ -51,15 +51,15 @@ type withMessage struct {
 	underlying error
 }
 
-func (w withMessage) Error() string {
+func (w *withMessage) Error() string {
 	return fmt.Sprintf("%s: %s", w.message, w.underlying)
 }
 
-func (w withMessage) UnwrapError() error {
+func (w *withMessage) UnwrapError() error {
 	return w.underlying
 }
 
-func (w withMessage) GetMessage() string {
+func (w *withMessage) GetMessage() string {
 	return w.message
 }
 
@@ -109,7 +109,7 @@ func (m MessageKV) WrapError(err error) error {
 		}
 		fmt.Fprintf(buf, "%s=%s", k, v)
 	}
-	return withMessageKV{m, buf.String(), err}
+	return &withMessageKV{m, buf.String(), err}
 }
 
 type withMessageKV struct {
@@ -118,15 +118,15 @@ type withMessageKV struct {
 	underlying error
 }
 
-func (m withMessageKV) Error() string {
+func (m *withMessageKV) Error() string {
 	return fmt.Sprintf("%s: %s", m.memo, m.underlying)
 }
 
-func (m withMessageKV) UnwrapError() error {
+func (m *withMessageKV) UnwrapError() error {
 	return m.underlying
 }
 
-func (m withMessageKV) GetMessageKV() MessageKV {
+func (m *withMessageKV) GetMessageKV() MessageKV {
 	return m.kv
 }
 
@@ -136,7 +136,7 @@ func (m withMessageKV) GetMessageKV() MessageKV {
 func WithCallStackSkip(skip int) Wrapper {
 	cs := Callers(skip + 1)
 	return WrapperFunc(func(err error) error {
-		return withCallStack{
+		return &withCallStack{
 			cs,
 			err,
 		}
@@ -148,16 +148,16 @@ type withCallStack struct {
 	underlying error
 }
 
-func (w withCallStack) Error() string {
+func (w *withCallStack) Error() string {
 	head := w.callStack.HeadFrame()
 	return fmt.Sprintf("%s.%s: %s", head.Pkg(), head.Func(), w.underlying)
 }
 
-func (w withCallStack) UnwrapError() error {
+func (w *withCallStack) UnwrapError() error {
 	return w.underlying
 }
 
-func (w withCallStack) GetCallStack() CallStack {
+func (w *withCallStack) GetCallStack() CallStack {
 	return w.callStack
 }
 
@@ -202,7 +202,7 @@ func CallStackOf(err error) (CallStack, bool) {
 // You don't have to use this directly, unless using function Custom.
 func WithFormatter() Wrapper {
 	return WrapperFunc(func(err error) error {
-		return formatter{err}
+		return &formatter{err}
 	})
 }
 
@@ -210,11 +210,13 @@ type formatter struct {
 	error
 }
 
-func (f formatter) UnwrapError() error {
+func (f *formatter) UnwrapError() error {
 	return f.error
 }
 
-func (f formatter) Format(s fmt.State, verb rune) {
+func (f *formatter) IsFormatter() {}
+
+func (f *formatter) Format(s fmt.State, verb rune) {
 	if verb != 'v' { // %s
 		io.WriteString(s, f.Error())
 		return
@@ -224,7 +226,7 @@ func (f formatter) Format(s fmt.State, verb rune) {
 		type formatter struct {
 			error
 		}
-		fmt.Fprintf(s, "%#v", formatter{f.error})
+		fmt.Fprintf(s, "%#v", &formatter{f.error})
 		return
 	}
 
@@ -245,6 +247,9 @@ func (f formatter) Format(s fmt.State, verb rune) {
 	}
 	type coder interface {
 		GetCode() Code
+	}
+	type formatter interface {
+		IsFormatter()
 	}
 
 	i := NewIterator(f.error)
