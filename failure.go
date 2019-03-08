@@ -67,10 +67,6 @@ func (e unexpected) Error() string {
 	return string(e)
 }
 
-func (e unexpected) GetMessage() string {
-	return string(e)
-}
-
 // Unexpected creates an error from message without error code.
 // The returned error should be kind of internal or unknown error.
 func Unexpected(msg string, wrappers ...Wrapper) error {
