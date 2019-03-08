@@ -105,7 +105,7 @@ func TestFailure(t *testing.T) {
 
 			shouldNil:     false,
 			wantCode:      nil,
-			wantMessage:   "unexpected error",
+			wantMessage:   "",
 			wantStackLine: 104,
 			wantError:     "failure_test.TestFailure: aaa=1: unexpected error",
 		},
