@@ -25,13 +25,13 @@ func shouldMatch(t *testing.T, s, re string) {
 func shouldEqual(t *testing.T, a, b interface{}) {
 	t.Helper()
 	if !reflect.DeepEqual(a, b) {
-		t.Errorf("%#v does not equal to %#v", a, b)
+		t.Errorf("%T(%#v) does not equal to %T(%#v)", a, a, b, b)
 	}
 }
 
 func shouldDiffer(t *testing.T, a, b interface{}) {
 	t.Helper()
 	if reflect.DeepEqual(a, b) {
-		t.Errorf("%#v does not differ from %#v", a, b)
+		t.Errorf("%T(%#v) does not differ from %T(%#v)", a, a, b, b)
 	}
 }
