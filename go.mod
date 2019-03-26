@@ -1,3 +1,3 @@
 module github.com/morikuni/failure
 
-require github.com/pkg/errors v0.8.0
+go 1.12

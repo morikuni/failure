@@ -6,8 +6,6 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
-
-	"github.com/pkg/errors"
 )
 
 // CallStack represents a call stack.
@@ -90,15 +88,6 @@ func Callers(skip int) CallStack {
 	}
 
 	return callStack{pcs[:n]}
-}
-
-func callStackFromPkgErrors(st errors.StackTrace) CallStack {
-	pcs := make([]uintptr, len(st))
-	for i, v := range st {
-		pcs[i] = uintptr(v)
-	}
-
-	return callStack{[]uintptr(pcs)}
 }
 
 // Frame represents a stack frame.

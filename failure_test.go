@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	"github.com/morikuni/failure"
-	"github.com/pkg/errors"
 )
 
 const (
@@ -16,7 +15,6 @@ const (
 
 func TestFailure(t *testing.T) {
 	base := failure.New(TestCodeA, failure.Message("xxx"), failure.MessageKV{"zzz": "true"})
-	pkgErr := errors.New("yyy")
 	tests := map[string]struct {
 		err error
 
@@ -32,7 +30,7 @@ func TestFailure(t *testing.T) {
 			shouldNil:     false,
 			wantCode:      TestCodeA,
 			wantMessage:   "",
-			wantStackLine: 30,
+			wantStackLine: 28,
 			wantError:     "failure_test.TestFailure: aaa=1: code(code_a)",
 		},
 		"translate": {
@@ -41,7 +39,7 @@ func TestFailure(t *testing.T) {
 			shouldNil:     false,
 			wantCode:      TestCodeB,
 			wantMessage:   "xxx",
-			wantStackLine: 18,
+			wantStackLine: 17,
 			wantError:     "failure_test.TestFailure: code(1): failure_test.TestFailure: xxx: zzz=true: code(code_a)",
 		},
 		"overwrite": {
@@ -50,7 +48,7 @@ func TestFailure(t *testing.T) {
 			shouldNil:     false,
 			wantCode:      TestCodeB,
 			wantMessage:   "aaa: bbb",
-			wantStackLine: 18,
+			wantStackLine: 17,
 			wantError:     "failure_test.TestFailure: aaa: bbb: ccc=1 ddd=2: code(1): failure_test.TestFailure: xxx: zzz=true: code(code_a)",
 		},
 		"wrap": {
@@ -59,7 +57,7 @@ func TestFailure(t *testing.T) {
 			shouldNil:     false,
 			wantCode:      nil,
 			wantMessage:   "",
-			wantStackLine: 57,
+			wantStackLine: 55,
 			wantError:     "failure_test.TestFailure: " + io.EOF.Error(),
 		},
 		"wrap nil": {
@@ -70,15 +68,6 @@ func TestFailure(t *testing.T) {
 			wantMessage:   "",
 			wantStackLine: 0,
 			wantError:     "",
-		},
-		"pkg/errors": {
-			err: failure.Translate(pkgErr, TestCodeB, failure.Message("aaa")),
-
-			shouldNil:     false,
-			wantCode:      TestCodeB,
-			wantMessage:   "aaa",
-			wantStackLine: 19,
-			wantError:     "failure_test.TestFailure: aaa: code(1): yyy",
 		},
 		"nil": {
 			err: nil,
@@ -104,7 +93,7 @@ func TestFailure(t *testing.T) {
 			shouldNil:     false,
 			wantCode:      nil,
 			wantMessage:   "",
-			wantStackLine: 102,
+			wantStackLine: 91,
 			wantError:     "failure_test.TestFailure: aaa=1: unexpected error",
 		},
 	}
@@ -157,14 +146,14 @@ func TestFailure_Format(t *testing.T) {
 	exp := `&failure.formatter{error:\(\*failure.withCallStack\)\(.*`
 	shouldMatch(t, fmt.Sprintf("%#v", err), exp)
 
-	exp = `\[failure_test.TestFailure_Format\] /.*/github.com/morikuni/failure/failure_test.go:151
-\[failure_test.TestFailure_Format\] /.*/github.com/morikuni/failure/failure_test.go:150
+	exp = `\[failure_test.TestFailure_Format\] /.*/github.com/morikuni/failure/failure_test.go:140
+\[failure_test.TestFailure_Format\] /.*/github.com/morikuni/failure/failure_test.go:139
     message\("xxx"\)
     zzz = true
     code\(code_a\)
     \*errors.errorString\("yyy"\)
 \[CallStack\]
-    \[failure_test.TestFailure_Format\] /.*/github.com/morikuni/failure/failure_test.go:150
+    \[failure_test.TestFailure_Format\] /.*/github.com/morikuni/failure/failure_test.go:139
     \[.*`
 	shouldMatch(t, fmt.Sprintf("%+v", err), exp)
 }
