@@ -26,9 +26,9 @@ func TestCode(t *testing.T) {
 		c2 CustomCode         = "123"
 	)
 
-	shouldEqual(t, "123", s.ErrorCode())
-	shouldEqual(t, "123", i.ErrorCode())
-	shouldEqual(t, "123", c.ErrorCode())
+	shouldEqual(t, s.ErrorCode(), "123")
+	shouldEqual(t, i.ErrorCode(), "123")
+	shouldEqual(t, c.ErrorCode(), "123")
 
 	shouldEqual(t, s, s2)
 	shouldEqual(t, i, i2)

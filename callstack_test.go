@@ -102,11 +102,11 @@ func TestCallStack_Frames(t *testing.T) {
 
 	shouldEqual(t, cs.Frames(), fs)
 
-	shouldEqual(t, 12, fs[0].Line())
-	shouldEqual(t, "X", fs[0].Func())
+	shouldEqual(t, fs[0].Line(), 12)
+	shouldEqual(t, fs[0].Func(), "X")
 
-	shouldEqual(t, 100, fs[1].Line())
-	shouldEqual(t, "TestCallStack_Frames", fs[1].Func())
+	shouldEqual(t, fs[1].Line(), 100)
+	shouldEqual(t, fs[1].Func(), "TestCallStack_Frames")
 }
 
 func TestCallStack_HeadFrame(t *testing.T) {
@@ -118,9 +118,9 @@ func TestCallStack_HeadFrame(t *testing.T) {
 func TestFrame(t *testing.T) {
 	f := X().HeadFrame()
 
-	shouldEqual(t, "X", f.Func())
-	shouldEqual(t, 12, f.Line())
-	shouldEqual(t, "callstack_test.go", f.File())
+	shouldEqual(t, f.Func(), "X")
+	shouldEqual(t, f.Line(), 12)
+	shouldEqual(t, f.File(), "callstack_test.go")
 	shouldContain(t, f.Path(), "github.com/morikuni/failure/callstack_test.go")
-	shouldEqual(t, "failure_test", f.Pkg())
+	shouldEqual(t, f.Pkg(), "failure_test")
 }

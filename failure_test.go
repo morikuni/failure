@@ -118,12 +118,12 @@ func TestFailure(t *testing.T) {
 			}
 
 			code, ok := failure.CodeOf(test.err)
-			shouldEqual(t, test.wantCode != nil, ok)
-			shouldEqual(t, test.wantCode, code)
+			shouldEqual(t, ok, test.wantCode != nil)
+			shouldEqual(t, code, test.wantCode)
 
 			msg, ok := failure.MessageOf(test.err)
-			shouldEqual(t, test.wantMessage != "", ok)
-			shouldEqual(t, test.wantMessage, msg)
+			shouldEqual(t, ok, test.wantMessage != "")
+			shouldEqual(t, msg, test.wantMessage)
 
 			if test.wantError != "" {
 				shouldEqual(t, test.err.Error(), test.wantError)
@@ -136,7 +136,7 @@ func TestFailure(t *testing.T) {
 				shouldEqual(t, ok, true)
 				fs := cs.Frames()
 				shouldDiffer(t, len(fs), 0)
-				shouldEqual(t, test.wantStackLine, fs[0].Line())
+				shouldEqual(t, fs[0].Line(), test.wantStackLine)
 			} else {
 				shouldEqual(t, ok, false)
 				shouldEqual(t, cs, nil)
@@ -151,8 +151,8 @@ func TestFailure_Format(t *testing.T) {
 	err := failure.Wrap(e2)
 
 	want := "failure_test.TestFailure_Format: failure_test.TestFailure_Format: xxx: zzz=true: code(code_a): yyy"
-	shouldEqual(t, want, fmt.Sprintf("%s", err))
-	shouldEqual(t, want, fmt.Sprintf("%v", err))
+	shouldEqual(t, fmt.Sprintf("%s", err), want)
+	shouldEqual(t, fmt.Sprintf("%v", err), want)
 
 	exp := `&failure.formatter{error:\(\*failure.withCallStack\)\(.*`
 	shouldMatch(t, fmt.Sprintf("%#v", err), exp)
