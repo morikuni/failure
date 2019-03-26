@@ -7,8 +7,6 @@ import (
 
 	"github.com/morikuni/failure"
 	"github.com/pkg/errors"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 const (
@@ -34,7 +32,7 @@ func TestFailure(t *testing.T) {
 			shouldNil:     false,
 			wantCode:      TestCodeA,
 			wantMessage:   "",
-			wantStackLine: 32,
+			wantStackLine: 30,
 			wantError:     "failure_test.TestFailure: aaa=1: code(code_a)",
 		},
 		"translate": {
@@ -43,7 +41,7 @@ func TestFailure(t *testing.T) {
 			shouldNil:     false,
 			wantCode:      TestCodeB,
 			wantMessage:   "xxx",
-			wantStackLine: 20,
+			wantStackLine: 18,
 			wantError:     "failure_test.TestFailure: code(1): failure_test.TestFailure: xxx: zzz=true: code(code_a)",
 		},
 		"overwrite": {
@@ -52,7 +50,7 @@ func TestFailure(t *testing.T) {
 			shouldNil:     false,
 			wantCode:      TestCodeB,
 			wantMessage:   "aaa: bbb",
-			wantStackLine: 20,
+			wantStackLine: 18,
 			wantError:     "failure_test.TestFailure: aaa: bbb: ccc=1 ddd=2: code(1): failure_test.TestFailure: xxx: zzz=true: code(code_a)",
 		},
 		"wrap": {
@@ -61,7 +59,7 @@ func TestFailure(t *testing.T) {
 			shouldNil:     false,
 			wantCode:      nil,
 			wantMessage:   "",
-			wantStackLine: 59,
+			wantStackLine: 57,
 			wantError:     "failure_test.TestFailure: " + io.EOF.Error(),
 		},
 		"wrap nil": {
@@ -79,7 +77,7 @@ func TestFailure(t *testing.T) {
 			shouldNil:     false,
 			wantCode:      TestCodeB,
 			wantMessage:   "aaa",
-			wantStackLine: 21,
+			wantStackLine: 19,
 			wantError:     "failure_test.TestFailure: aaa: code(1): yyy",
 		},
 		"nil": {
@@ -106,7 +104,7 @@ func TestFailure(t *testing.T) {
 			shouldNil:     false,
 			wantCode:      nil,
 			wantMessage:   "",
-			wantStackLine: 104,
+			wantStackLine: 102,
 			wantError:     "failure_test.TestFailure: aaa=1: unexpected error",
 		},
 	}
@@ -114,36 +112,34 @@ func TestFailure(t *testing.T) {
 	for title, test := range tests {
 		t.Run(title, func(t *testing.T) {
 			if test.shouldNil {
-				assert.NoError(t, test.err)
+				shouldEqual(t, test.err, nil)
 			} else {
-				assert.Error(t, test.err)
+				shouldDiffer(t, test.err, nil)
 			}
 
 			code, ok := failure.CodeOf(test.err)
-			assert.Equal(t, test.wantCode != nil, ok)
-			assert.Equal(t, test.wantCode, code)
+			shouldEqual(t, test.wantCode != nil, ok)
+			shouldEqual(t, test.wantCode, code)
 
 			msg, ok := failure.MessageOf(test.err)
-			assert.Equal(t, test.wantMessage != "", ok)
-			assert.Equal(t, test.wantMessage, msg)
+			shouldEqual(t, test.wantMessage != "", ok)
+			shouldEqual(t, test.wantMessage, msg)
 
 			if test.wantError != "" {
-				assert.EqualError(t, test.err, test.wantError)
+				shouldEqual(t, test.err.Error(), test.wantError)
 			} else {
-				assert.Nil(t, test.err)
+				shouldEqual(t, test.err, nil)
 			}
 
 			cs, ok := failure.CallStackOf(test.err)
 			if test.wantStackLine != 0 {
-				assert.True(t, ok)
+				shouldEqual(t, ok, true)
 				fs := cs.Frames()
-				require.NotEmpty(t, fs)
-				if !assert.Equal(t, test.wantStackLine, fs[0].Line()) {
-					t.Log(fs[0])
-				}
+				shouldDiffer(t, len(fs), 0)
+				shouldEqual(t, test.wantStackLine, fs[0].Line())
 			} else {
-				assert.False(t, ok)
-				assert.Nil(t, cs)
+				shouldEqual(t, ok, false)
+				shouldEqual(t, cs, nil)
 			}
 		})
 	}
@@ -155,22 +151,22 @@ func TestFailure_Format(t *testing.T) {
 	err := failure.Wrap(e2)
 
 	want := "failure_test.TestFailure_Format: failure_test.TestFailure_Format: xxx: zzz=true: code(code_a): yyy"
-	assert.Equal(t, want, fmt.Sprintf("%s", err))
-	assert.Equal(t, want, fmt.Sprintf("%v", err))
+	shouldEqual(t, want, fmt.Sprintf("%s", err))
+	shouldEqual(t, want, fmt.Sprintf("%v", err))
 
 	exp := `&failure.formatter{error:\(\*failure.withCallStack\)\(.*`
-	assert.Regexp(t, exp, fmt.Sprintf("%#v", err))
+	shouldMatch(t, fmt.Sprintf("%#v", err), exp)
 
-	exp = `\[failure_test.TestFailure_Format\] /.*/github.com/morikuni/failure/failure_test.go:155
-\[failure_test.TestFailure_Format\] /.*/github.com/morikuni/failure/failure_test.go:154
+	exp = `\[failure_test.TestFailure_Format\] /.*/github.com/morikuni/failure/failure_test.go:151
+\[failure_test.TestFailure_Format\] /.*/github.com/morikuni/failure/failure_test.go:150
     message\("xxx"\)
     zzz = true
     code\(code_a\)
     \*errors.errorString\("yyy"\)
 \[CallStack\]
-    \[failure_test.TestFailure_Format\] /.*/github.com/morikuni/failure/failure_test.go:154
+    \[failure_test.TestFailure_Format\] /.*/github.com/morikuni/failure/failure_test.go:150
     \[.*`
-	assert.Regexp(t, exp, fmt.Sprintf("%+v", err))
+	shouldMatch(t, fmt.Sprintf("%+v", err), exp)
 }
 
 func BenchmarkFailure(b *testing.B) {

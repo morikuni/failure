@@ -7,7 +7,6 @@ import (
 	"io"
 
 	"github.com/morikuni/failure"
-	"github.com/stretchr/testify/assert"
 )
 
 type CustomCode string
@@ -27,17 +26,17 @@ func TestCode(t *testing.T) {
 		c2 CustomCode         = "123"
 	)
 
-	assert.Equal(t, "123", s.ErrorCode())
-	assert.Equal(t, "123", i.ErrorCode())
-	assert.Equal(t, "123", c.ErrorCode())
+	shouldEqual(t, "123", s.ErrorCode())
+	shouldEqual(t, "123", i.ErrorCode())
+	shouldEqual(t, "123", c.ErrorCode())
 
-	assert.Equal(t, s, s2)
-	assert.Equal(t, i, i2)
-	assert.Equal(t, c, c2)
+	shouldEqual(t, s, s2)
+	shouldEqual(t, i, i2)
+	shouldEqual(t, c, c2)
 
-	assert.NotEqual(t, s, i)
-	assert.NotEqual(t, s, c)
-	assert.NotEqual(t, i, c)
+	shouldDiffer(t, s, i)
+	shouldDiffer(t, s, c)
+	shouldDiffer(t, i, c)
 }
 
 func TestIs(t *testing.T) {
@@ -50,22 +49,22 @@ func TestIs(t *testing.T) {
 	errB := failure.Translate(errA, B)
 	errC := failure.Wrap(errB)
 
-	assert.True(t, failure.Is(errA, A))
-	assert.True(t, failure.Is(errB, B))
-	assert.True(t, failure.Is(errC, B))
+	shouldEqual(t, failure.Is(errA, A), true)
+	shouldEqual(t, failure.Is(errB, B), true)
+	shouldEqual(t, failure.Is(errC, B), true)
 
-	assert.True(t, failure.Is(errA, A, B))
-	assert.True(t, failure.Is(errB, A, B))
-	assert.True(t, failure.Is(errC, A, B))
+	shouldEqual(t, failure.Is(errA, A, B), true)
+	shouldEqual(t, failure.Is(errB, A, B), true)
+	shouldEqual(t, failure.Is(errC, A, B), true)
 
-	assert.False(t, failure.Is(errA, B))
-	assert.False(t, failure.Is(errB, A))
-	assert.False(t, failure.Is(errC, A))
+	shouldEqual(t, failure.Is(errA, B), false)
+	shouldEqual(t, failure.Is(errB, A), false)
+	shouldEqual(t, failure.Is(errC, A), false)
 
-	assert.False(t, failure.Is(nil, A, B))
-	assert.False(t, failure.Is(io.EOF, A, B))
-	assert.False(t, failure.Is(errA))
+	shouldEqual(t, failure.Is(nil, A, B), false)
+	shouldEqual(t, failure.Is(io.EOF, A, B), false)
+	shouldEqual(t, failure.Is(errA), false)
 
-	assert.True(t, failure.Is(nil, nil))
-	assert.True(t, failure.Is(errors.New("error"), nil))
+	shouldEqual(t, failure.Is(nil, nil), true)
+	shouldEqual(t, failure.Is(errors.New("error"), nil), true)
 }
