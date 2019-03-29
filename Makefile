@@ -10,3 +10,5 @@ cover:
 view-cover: cover
 	GO111MODULE=on go tool cover -html coverage.txt
 
+mod:
+	GO111MODULE=on go mod tidy

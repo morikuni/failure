@@ -6,8 +6,6 @@ import (
 	"sort"
 
 	"io"
-
-	"github.com/pkg/errors"
 )
 
 // Unwrapper interface is used by iterator.
@@ -171,19 +169,13 @@ func CallStackOf(err error) (CallStack, bool) {
 	type callStackGetter interface {
 		GetCallStack() CallStack
 	}
-	type stackTracer interface {
-		StackTrace() errors.StackTrace
-	}
 
 	var last CallStack
 	i := NewIterator(err)
 	for i.Next() {
 		err := i.Error()
-		switch t := err.(type) {
-		case callStackGetter:
-			last = t.GetCallStack()
-		case stackTracer:
-			last = callStackFromPkgErrors(t.StackTrace())
+		if g, ok := err.(callStackGetter); ok {
+			last = g.GetCallStack()
 		}
 	}
 
