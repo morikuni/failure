@@ -79,6 +79,12 @@ func (cs callStack) Format(s fmt.State, verb rune) {
 	}
 }
 
+// NewCallStack returns call stack from program counters.
+// You can use Callers for usual usage.
+func NewCallStack(pcs []uintptr) CallStack {
+	return callStack{pcs}
+}
+
 // Callers returns a call stack for the current state.
 func Callers(skip int) CallStack {
 	var pcs [32]uintptr
@@ -87,7 +93,7 @@ func Callers(skip int) CallStack {
 		return nil
 	}
 
-	return callStack{pcs[:n]}
+	return NewCallStack(pcs[:n])
 }
 
 // Frame represents a stack frame.
