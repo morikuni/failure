@@ -1,7 +1,5 @@
 package failure
 
-import "strconv"
-
 // Is checks whether err represents any of given code.
 func Is(err error, codes ...Code) bool {
 	if len(codes) == 0 {
@@ -24,6 +22,9 @@ func Is(err error, codes ...Code) bool {
 
 // Code represents an error code of the error.
 // The code should be able to be compared by == operator.
+// You can define your own code type instead of using StringCode type,
+// when you want to distinguish errors by type for some purpose (e.g. define
+// code type for each package like user, item, auth etc).
 type Code interface {
 	// ErrorCode returns an error code in string representation.
 	ErrorCode() string
@@ -35,12 +36,4 @@ type StringCode string
 // ErrorCode implements the Code interface.
 func (c StringCode) ErrorCode() string {
 	return string(c)
-}
-
-// IntCode represents an error code in int64.
-type IntCode int64
-
-// ErrorCode implements the Code interface.
-func (c IntCode) ErrorCode() string {
-	return strconv.FormatInt(int64(c), 10)
 }
