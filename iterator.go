@@ -12,7 +12,8 @@ type Iterator struct {
 }
 
 // Next try to unwrap an error and returns whether the next
-// error is present.
+// error is present. Since this method updates internal state of the
+// iterator, should be called only once per iteration.
 func (i *Iterator) Next() bool {
 	i.err = i.unwrapError()
 	if i.err == nil {

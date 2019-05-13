@@ -22,7 +22,9 @@ func Is(err error, codes ...Code) bool {
 
 // Code represents an error code of the error.
 // The code should be able to be compared by == operator.
-// You can define your own code type instead of using StringCode type,
+// Basically, it should to be defined as constants.
+//
+// You can also define your own code type instead of using StringCode type,
 // when you want to distinguish errors by type for some purpose (e.g. define
 // code type for each package like user, item, auth etc).
 type Code interface {
