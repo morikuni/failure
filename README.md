@@ -49,6 +49,10 @@ for i.Next() { // unwrap error
 
 ### You can try it on [The Go Playground](https://play.golang.org/p/-t_jA32oBWa)
 
+You can also see the example on GitHub by opening this.
+
+<details>
+	
 ```go
 package main
 
@@ -173,3 +177,5 @@ func main() {
 	fmt.Println(string(res))
 }
 ```
+
+</details>
