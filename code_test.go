@@ -18,25 +18,19 @@ func (c CustomCode) ErrorCode() string {
 func TestCode(t *testing.T) {
 	const (
 		s failure.StringCode = "123"
-		i failure.IntCode    = 123
 		c CustomCode         = "123"
 
 		s2 failure.StringCode = "123"
-		i2 failure.IntCode    = 123
 		c2 CustomCode         = "123"
 	)
 
 	shouldEqual(t, s.ErrorCode(), "123")
-	shouldEqual(t, i.ErrorCode(), "123")
 	shouldEqual(t, c.ErrorCode(), "123")
 
 	shouldEqual(t, s, s2)
-	shouldEqual(t, i, i2)
 	shouldEqual(t, c, c2)
 
-	shouldDiffer(t, s, i)
 	shouldDiffer(t, s, c)
-	shouldDiffer(t, i, c)
 }
 
 func TestIs(t *testing.T) {

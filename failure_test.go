@@ -10,7 +10,7 @@ import (
 
 const (
 	TestCodeA failure.StringCode = "code_a"
-	TestCodeB failure.IntCode    = 1
+	TestCodeB failure.StringCode = "1"
 )
 
 func TestFailure(t *testing.T) {
