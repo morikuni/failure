@@ -47,14 +47,21 @@ for i.Next() { // unwrap error
 
 ## Example
 
+### You can try it on [The Go Playground](https://play.golang.org/p/-t_jA32oBWa)
+
+You can also see the example on GitHub by opening this.
+
+<details>
+	
 ```go
 package main
 
 import (
-	"errors"
 	"fmt"
 	"io"
 	"net/http"
+	"net/http/httptest"
+	"net/http/httputil"
 
 	"github.com/morikuni/failure"
 )
@@ -72,11 +79,7 @@ func GetACL(projectID, userID string) (acl interface{}, e error) {
 			failure.MessageKV{"project_id": projectID, "user_id": userID},
 		)
 	}
-	err := failure.Unexpected("unexpected error")
-	if err != nil {
-		return nil, failure.Wrap(err)
-	}
-	return nil, nil
+	return nil, failure.Unexpected("unexpected error")
 }
 
 func GetProject(projectID, userID string) (project interface{}, e error) {
@@ -94,7 +97,7 @@ func GetProject(projectID, userID string) (project interface{}, e error) {
 }
 
 func Handler(w http.ResponseWriter, r *http.Request) {
-	_, err := GetProject(r.FormValue("projectID"), r.FormValue("userID"))
+	_, err := GetProject(r.FormValue("project_id"), r.FormValue("user_id"))
 	if err != nil {
 		HandleError(w, err)
 		return
@@ -128,8 +131,22 @@ func HandleError(w http.ResponseWriter, err error) {
 	w.WriteHeader(getHTTPStatus(err))
 	io.WriteString(w, getMessage(err))
 
-	fmt.Println(err)
-	// main.GetProject: no acl exists: additional_info=hello: code(Forbidden): main.GetACL: project_id=123 user_id=456: code(NotFound)
+	fmt.Println("============ Error ============")
+	fmt.Printf("Error = %v\n", err)
+
+	code, _ := failure.CodeOf(err)
+	fmt.Printf("Code = %v\n", code)
+
+	msg, _ := failure.MessageOf(err)
+	fmt.Printf("Message = %v\n", msg)
+
+	cs, _ := failure.CallStackOf(err)
+	fmt.Printf("CallStack = %v\n", cs)
+
+	fmt.Printf("Cause = %v\n", failure.CauseOf(err))
+
+	fmt.Println()
+	fmt.Println("============ %+v ============")
 	fmt.Printf("%+v\n", err)
 	// [main.GetProject] /go/src/github.com/morikuni/failure/example/main.go:36
 	//     message("no acl exists")
@@ -148,26 +165,17 @@ func HandleError(w http.ResponseWriter, err error) {
 	//     [http.serverHandler.ServeHTTP] /usr/local/go/src/net/http/server.go:2741
 	//     [http.(*conn).serve] /usr/local/go/src/net/http/server.go:1847
 	//     [runtime.goexit] /usr/local/go/src/runtime/asm_amd64.s:1333
-	fmt.Println(failure.CodeOf(err))
-	// Forbidden true
-	fmt.Println(failure.MessageOf(err))
-	// no acl exists true
-	fmt.Println(failure.CallStackOf(err))
-	// main.GetACL: main.GetProject: main.Handler: http.HandlerFunc.ServeHTTP: http.(*ServeMux).ServeHTTP: http.serverHandler.ServeHTTP: http.(*conn).serve: goexit true
-	fmt.Println(failure.CauseOf(err))
-	// code(NotFound)
 }
 
 func main() {
-	http.HandleFunc("/", Handler)
-	http.ListenAndServe(":8080", nil)
-	// $ http "localhost:8080/?projectID=123&userID=456"
-	//
-	// HTTP/1.1 403 Forbidden
-	// Content-Length: 13
-	// Content-Type: text/plain; charset=utf-8
-	// Date: Sat, 16 Feb 2019 14:02:30 GMT
-	//
-	// no acl exists
+	req := httptest.NewRequest(http.MethodGet, "/?project_id=aaa&user_id=111", nil)
+	rec := httptest.NewRecorder()
+	Handler(rec, req)
+
+	res, _ := httputil.DumpResponse(rec.Result(), true)
+	fmt.Println("============ Dump ============")
+	fmt.Println(string(res))
 }
 ```
+
+</details>
