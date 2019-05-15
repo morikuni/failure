@@ -12,7 +12,7 @@ type Failure interface {
 	GetCode() Code
 }
 
-// CodeOf extracts an error code from the error.
+// CodeOf extracts an error code from the err.
 func CodeOf(err error) (Code, bool) {
 	if err == nil {
 		return nil, false
@@ -34,7 +34,7 @@ func New(code Code, wrappers ...Wrapper) error {
 	return Custom(Custom(NewFailure(code), wrappers...), WithFormatter(), WithCallStackSkip(1))
 }
 
-// Translate translates err to an error with given code.
+// Translate translates the err to an error with given code.
 // It wraps the error with given wrappers, and automatically
 // add call stack and formatter.
 func Translate(err error, code Code, wrappers ...Wrapper) error {
@@ -75,13 +75,14 @@ func Unexpected(msg string, wrappers ...Wrapper) error {
 
 // NewFailure returns Failure without any wrappers.
 // You don't have to use this directly, unless using function Custom.
-// Probably, you can use New instead of this.
+// Basically, you can use function New instead of this.
 func NewFailure(code Code) Failure {
 	return &withCode{code: code}
 }
 
 // WithCode appends code to an error.
 // You don't have to use this directly, unless using function Custom.
+// Basically, you can use function Translate instead of this.
 func WithCode(code Code) Wrapper {
 	return WrapperFunc(func(err error) error {
 		return &withCode{code, err}

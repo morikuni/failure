@@ -1,17 +1,16 @@
 package failure
 
-// NewIterator creates an iterator for given err.
+// NewIterator creates an iterator for the err.
 func NewIterator(err error) *Iterator {
 	return &Iterator{guardianUnwapper{err}}
 }
 
-// Iterator is designed to iterate errors by unwrapping it
-// with for loop.
+// Iterator is designed to iterate wrapped errors with for loop.
 type Iterator struct {
 	err error
 }
 
-// Next try to unwrap an error and returns whether the next
+// Next tries to unwrap an error and returns whether the next
 // error is present. Since this method updates internal state of the
 // iterator, should be called only once per iteration.
 func (i *Iterator) Next() bool {
@@ -48,7 +47,7 @@ func (w guardianUnwapper) UnwrapError() error {
 	return w.error
 }
 
-// CauseOf returns the most underlying error of err.
+// CauseOf returns a most underlying error of the err.
 func CauseOf(err error) error {
 	if err == nil {
 		return nil

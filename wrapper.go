@@ -30,7 +30,7 @@ func (f WrapperFunc) WrapError(err error) error {
 	return f(err)
 }
 
-// Message appends error message to an error.
+// Message appends an error message to the err.
 func Message(msg string) Wrapper {
 	return WrapperFunc(func(err error) error {
 		return &withMessage{msg, err}
@@ -61,8 +61,7 @@ func (w *withMessage) GetMessage() string {
 	return w.message
 }
 
-// MessageOf extracts the message from err.
-// Message from MessageKV is not returned.
+// MessageOf extracts a message from the err.
 func MessageOf(err error) (string, bool) {
 	if err == nil {
 		return "", false
@@ -128,8 +127,7 @@ func (m *withContext) GetContext() Context {
 	return m.ctx
 }
 
-// WithCallStackSkip appends call stack to an error
-// skipping top N of frames.
+// WithCallStackSkip appends a call stack to the err skipping first N frames.
 // You don't have to use this directly, unless using function Custom.
 func WithCallStackSkip(skip int) Wrapper {
 	cs := Callers(skip + 1)
@@ -159,7 +157,7 @@ func (w *withCallStack) GetCallStack() CallStack {
 	return w.callStack
 }
 
-// CallStackOf extracts call stack from the error.
+// CallStackOf extracts a call stack from the err.
 // Returned call stack is for the most deepest place (appended first).
 func CallStackOf(err error) (CallStack, bool) {
 	if err == nil {
@@ -185,7 +183,7 @@ func CallStackOf(err error) (CallStack, bool) {
 	return last, true
 }
 
-// WithFormatter appends error formatter to an error.
+// WithFormatter appends an error formatter to the err.
 //
 //     %v+: Print trace for each place, and deepest call stack.
 //     %#v: Print raw structure of the error.
@@ -231,8 +229,8 @@ func (f *formatter) Format(s fmt.State, verb rune) {
 	type callStacker interface {
 		GetCallStack() CallStack
 	}
-	type messageKVer interface {
-		GetMessageKV() MessageKV
+	type contexter interface {
+		GetContext() Context
 	}
 	type messenger interface {
 		GetMessage() string
@@ -250,7 +248,7 @@ func (f *formatter) Format(s fmt.State, verb rune) {
 		switch t := err.(type) {
 		case callStacker:
 			fmt.Fprintf(s, "%+v\n", t.GetCallStack().HeadFrame())
-		case messageKVer:
+		case contexter:
 			kv := t.GetMessageKV()
 			for k, v := range kv {
 				fmt.Fprintf(s, "    %s = %s\n", k, v)
