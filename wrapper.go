@@ -249,7 +249,7 @@ func (f *formatter) Format(s fmt.State, verb rune) {
 		case callStacker:
 			fmt.Fprintf(s, "%+v\n", t.GetCallStack().HeadFrame())
 		case contexter:
-			kv := t.GetMessageKV()
+			kv := t.GetContext()
 			for k, v := range kv {
 				fmt.Fprintf(s, "    %s = %s\n", k, v)
 			}
