@@ -14,7 +14,7 @@ const (
 )
 
 func TestFailure(t *testing.T) {
-	base := failure.New(TestCodeA, failure.Message("xxx"), failure.MessageKV{"zzz": "true"})
+	base := failure.New(TestCodeA, failure.Message("xxx"), failure.Context{"zzz": "true"})
 	tests := map[string]struct {
 		err error
 
@@ -25,7 +25,7 @@ func TestFailure(t *testing.T) {
 		wantError     string
 	}{
 		"new": {
-			err: failure.New(TestCodeA, failure.MessageKV{"aaa": "1"}),
+			err: failure.New(TestCodeA, failure.Context{"aaa": "1"}),
 
 			shouldNil:     false,
 			wantCode:      TestCodeA,
@@ -43,7 +43,7 @@ func TestFailure(t *testing.T) {
 			wantError:     "failure_test.TestFailure: code(1): failure_test.TestFailure: xxx: zzz=true: code(code_a)",
 		},
 		"overwrite": {
-			err: failure.Translate(base, TestCodeB, failure.Messagef("aaa: %s", "bbb"), failure.MessageKV{"ccc": "1", "ddd": "2"}),
+			err: failure.Translate(base, TestCodeB, failure.Messagef("aaa: %s", "bbb"), failure.Context{"ccc": "1", "ddd": "2"}),
 
 			shouldNil:     false,
 			wantCode:      TestCodeB,
@@ -88,7 +88,7 @@ func TestFailure(t *testing.T) {
 			wantError:     io.EOF.Error(),
 		},
 		"unexpected": {
-			err: failure.Unexpected("unexpected error", failure.MessageKV{"aaa": "1"}),
+			err: failure.Unexpected("unexpected error", failure.Context{"aaa": "1"}),
 
 			shouldNil:     false,
 			wantCode:      nil,
@@ -136,7 +136,7 @@ func TestFailure(t *testing.T) {
 
 func TestFailure_Format(t *testing.T) {
 	e1 := fmt.Errorf("yyy")
-	e2 := failure.Translate(e1, TestCodeA, failure.Message("xxx"), failure.MessageKV{"zzz": "true"})
+	e2 := failure.Translate(e1, TestCodeA, failure.Message("xxx"), failure.Context{"zzz": "true"})
 	err := failure.Wrap(e2)
 
 	want := "failure_test.TestFailure_Format: failure_test.TestFailure_Format: xxx: zzz=true: code(code_a): yyy"

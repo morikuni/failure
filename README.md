@@ -47,7 +47,7 @@ for i.Next() { // unwrap error
 
 ## Example
 
-### You can try it on [The Go Playground](https://play.golang.org/p/-t_jA32oBWa)
+### You can try it on [The Go Playground](https://play.golang.org/p/Pmgm7-7J1_c)
 
 You can also see the example on GitHub by opening this.
 
@@ -76,7 +76,7 @@ func GetACL(projectID, userID string) (acl interface{}, e error) {
 	notFound := true
 	if notFound {
 		return nil, failure.New(NotFound,
-			failure.MessageKV{"project_id": projectID, "user_id": userID},
+			failure.Context{"project_id": projectID, "user_id": userID},
 		)
 	}
 	return nil, failure.Unexpected("unexpected error")
@@ -88,7 +88,7 @@ func GetProject(projectID, userID string) (project interface{}, e error) {
 		if failure.Is(err, NotFound) {
 			return nil, failure.Translate(err, Forbidden,
 				failure.Message("no acl exists"),
-				failure.MessageKV{"additional_info": "hello"},
+				failure.Context{"additional_info": "hello"},
 			)
 		}
 		return nil, failure.Wrap(err)
@@ -146,7 +146,7 @@ func HandleError(w http.ResponseWriter, err error) {
 	fmt.Printf("Cause = %v\n", failure.CauseOf(err))
 
 	fmt.Println()
-	fmt.Println("============ %+v ============")
+	fmt.Println("============ Detail ============")
 	fmt.Printf("%+v\n", err)
 	// [main.GetProject] /go/src/github.com/morikuni/failure/example/main.go:36
 	//     message("no acl exists")
