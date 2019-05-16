@@ -30,7 +30,7 @@ func (f WrapperFunc) WrapError(err error) error {
 	return f(err)
 }
 
-// Message appends error message to an error.
+// Message appends an error message to the err.
 func Message(msg string) Wrapper {
 	return WrapperFunc(func(err error) error {
 		return &withMessage{msg, err}
@@ -61,8 +61,7 @@ func (w *withMessage) GetMessage() string {
 	return w.message
 }
 
-// MessageOf extracts the message from err.
-// Message from MessageKV is not returned.
+// MessageOf extracts a message from the err.
 func MessageOf(err error) (string, bool) {
 	if err == nil {
 		return "", false
@@ -83,16 +82,16 @@ func MessageOf(err error) (string, bool) {
 	return "", false
 }
 
-// MessageKV is a key-value message appended to an error
-// for debugging purpose. You must not use this data as a part of
-// your application logic. Just print it.
-// If you want to extract MessageKV from error for printing purpose, you can create an
-// interface with method `GetMessageKV() MessageKV` and use it with
-// iterator, like other extraction function (e.g. MessageOf).
-type MessageKV map[string]string
+// Context is a key-value data which describes the how the error occurred
+// for debugging purpose. You must not use context data as a part of your
+// application logic. Just print it.
+// If you want to extract Context from error for printing purpose, you can
+// define an interface with method `GetContext() Context` and use it with
+// iterator, like other extraction functions (see: MessageOf).
+type Context map[string]string
 
 // WrapError implements the Wrapper interface.
-func (m MessageKV) WrapError(err error) error {
+func (m Context) WrapError(err error) error {
 	keys := make([]string, 0, len(m))
 	for k := range m {
 		keys = append(keys, k)
@@ -107,29 +106,28 @@ func (m MessageKV) WrapError(err error) error {
 		}
 		fmt.Fprintf(buf, "%s=%s", k, v)
 	}
-	return &withMessageKV{m, buf.String(), err}
+	return &withContext{m, buf.String(), err}
 }
 
-type withMessageKV struct {
-	kv         MessageKV
+type withContext struct {
+	ctx        Context
 	memo       string
 	underlying error
 }
 
-func (m *withMessageKV) Error() string {
+func (m *withContext) Error() string {
 	return fmt.Sprintf("%s: %s", m.memo, m.underlying)
 }
 
-func (m *withMessageKV) UnwrapError() error {
+func (m *withContext) UnwrapError() error {
 	return m.underlying
 }
 
-func (m *withMessageKV) GetMessageKV() MessageKV {
-	return m.kv
+func (m *withContext) GetContext() Context {
+	return m.ctx
 }
 
-// WithCallStackSkip appends call stack to an error
-// skipping top N of frames.
+// WithCallStackSkip appends a call stack to the err skipping first N frames.
 // You don't have to use this directly, unless using function Custom.
 func WithCallStackSkip(skip int) Wrapper {
 	cs := Callers(skip + 1)
@@ -159,7 +157,7 @@ func (w *withCallStack) GetCallStack() CallStack {
 	return w.callStack
 }
 
-// CallStackOf extracts call stack from the error.
+// CallStackOf extracts a call stack from the err.
 // Returned call stack is for the most deepest place (appended first).
 func CallStackOf(err error) (CallStack, bool) {
 	if err == nil {
@@ -185,7 +183,7 @@ func CallStackOf(err error) (CallStack, bool) {
 	return last, true
 }
 
-// WithFormatter appends error formatter to an error.
+// WithFormatter appends an error formatter to the err.
 //
 //     %v+: Print trace for each place, and deepest call stack.
 //     %#v: Print raw structure of the error.
@@ -231,8 +229,8 @@ func (f *formatter) Format(s fmt.State, verb rune) {
 	type callStacker interface {
 		GetCallStack() CallStack
 	}
-	type messageKVer interface {
-		GetMessageKV() MessageKV
+	type contexter interface {
+		GetContext() Context
 	}
 	type messenger interface {
 		GetMessage() string
@@ -250,8 +248,8 @@ func (f *formatter) Format(s fmt.State, verb rune) {
 		switch t := err.(type) {
 		case callStacker:
 			fmt.Fprintf(s, "%+v\n", t.GetCallStack().HeadFrame())
-		case messageKVer:
-			kv := t.GetMessageKV()
+		case contexter:
+			kv := t.GetContext()
 			for k, v := range kv {
 				fmt.Fprintf(s, "    %s = %s\n", k, v)
 			}

@@ -1,6 +1,6 @@
 package failure
 
-// Is checks whether err represents any of given code.
+// Is checks whether an error code from the err is any of given code.
 func Is(err error, codes ...Code) bool {
 	if len(codes) == 0 {
 		return false
@@ -20,7 +20,7 @@ func Is(err error, codes ...Code) bool {
 	return false
 }
 
-// Code represents an error code of the error.
+// Code represents an error code of an error.
 // The code should be able to be compared by == operator.
 // Basically, it should to be defined as constants.
 //
