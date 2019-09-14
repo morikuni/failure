@@ -12,6 +12,8 @@ type Failure interface {
 	GetCode() Code
 }
 
+var _ = (*withCode)(nil)
+
 // CodeOf extracts an error code from the err.
 func CodeOf(err error) (Code, bool) {
 	if err == nil {
@@ -94,13 +96,13 @@ type withCode struct {
 	underlying error
 }
 
-var _ interface {
-	Failure
-	Unwrapper
-} = (*withCode)(nil)
+// Deprecated: use Unwrap
+func (w *withCode) UnwrapError() error {
+	return w.Unwrap()
+}
 
-func (f *withCode) UnwrapError() error {
-	return f.underlying
+func (w *withCode) Unwrap() error {
+	return w.underlying
 }
 
 func (f *withCode) GetCode() Code {

@@ -25,7 +25,13 @@ func (i *Iterator) unwrapError() error {
 	type causer interface {
 		Cause() error
 	}
+	type go113error interface {
+		Unwrap() error
+	}
+
 	switch t := i.err.(type) {
+	case go113error:
+		return t.Unwrap()
 	case Unwrapper:
 		return t.UnwrapError()
 	case causer:
