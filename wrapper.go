@@ -15,12 +15,30 @@ type Unwrapper interface {
 	UnwrapError() error
 }
 
+var _ = []Unwrapper{
+	(*withMessage)(nil),
+	(*withContext)(nil),
+	(*withCallStack)(nil),
+	(*formatter)(nil),
+	(*withCode)(nil),
+}
+
+var _ = []interface{ Unwrap() error }{
+	(*withMessage)(nil),
+	(*withContext)(nil),
+	(*withCallStack)(nil),
+	(*formatter)(nil),
+	(*withCode)(nil),
+}
+
 // Wrapper interface is used by constructor functions.
 type Wrapper interface {
 	// WrapError should wrap given err to append some
 	// capability to the error.
 	WrapError(err error) error
 }
+
+var _ Wrapper = WrapperFunc(nil)
 
 // WrapperFunc is an adaptor to use function as the Wrapper interface.
 type WrapperFunc func(err error) error
@@ -53,7 +71,12 @@ func (w *withMessage) Error() string {
 	return fmt.Sprintf("%s: %s", w.message, w.underlying)
 }
 
+// Deprecated: use Unwrap
 func (w *withMessage) UnwrapError() error {
+	return w.Unwrap()
+}
+
+func (w *withMessage) Unwrap() error {
 	return w.underlying
 }
 
@@ -119,8 +142,13 @@ func (m *withContext) Error() string {
 	return fmt.Sprintf("%s: %s", m.memo, m.underlying)
 }
 
-func (m *withContext) UnwrapError() error {
-	return m.underlying
+// Deprecated: use Unwrap
+func (w *withContext) UnwrapError() error {
+	return w.Unwrap()
+}
+
+func (w *withContext) Unwrap() error {
+	return w.underlying
 }
 
 func (m *withContext) GetContext() Context {
@@ -149,7 +177,12 @@ func (w *withCallStack) Error() string {
 	return fmt.Sprintf("%s.%s: %s", head.Pkg(), head.Func(), w.underlying)
 }
 
+// Deprecated: use Unwrap
 func (w *withCallStack) UnwrapError() error {
+	return w.Unwrap()
+}
+
+func (w *withCallStack) Unwrap() error {
 	return w.underlying
 }
 
@@ -200,8 +233,13 @@ type formatter struct {
 	error
 }
 
-func (f *formatter) UnwrapError() error {
-	return f.error
+// Deprecated: use Unwrap
+func (w *formatter) UnwrapError() error {
+	return w.Unwrap()
+}
+
+func (w *formatter) Unwrap() error {
+	return w.error
 }
 
 func (f *formatter) IsFormatter() {}
