@@ -45,6 +45,17 @@ func (i *Iterator) Error() error {
 	return i.err
 }
 
+// As tries to extract data from current error.
+// It returns true if the current error implemented As and it returned true.
+func (i *Iterator) As(x interface{}) bool {
+	switch t := i.Error().(type) {
+	case interface{ As(interface{}) bool }:
+		return t.As(x)
+	default:
+		return false
+	}
+}
+
 type guardianUnwapper struct {
 	error
 }

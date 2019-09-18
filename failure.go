@@ -22,9 +22,9 @@ func CodeOf(err error) (Code, bool) {
 
 	i := NewIterator(err)
 	for i.Next() {
-		err := i.Error()
-		if f, ok := err.(Failure); ok {
-			return f.GetCode(), true
+		var c Code
+		if i.As(&c) {
+			return c, true
 		}
 	}
 
@@ -105,8 +105,17 @@ func (w *withCode) Unwrap() error {
 	return w.underlying
 }
 
+// Deprecated: Please use As method on Iterator.
 func (f *withCode) GetCode() Code {
 	return f.code
+}
+
+func (f *withCode) As(x interface{}) bool {
+	if c, ok := x.(*Code); ok {
+		*c = f.code
+		return true
+	}
+	return false
 }
 
 func (f *withCode) Error() string {
