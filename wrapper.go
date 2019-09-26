@@ -38,7 +38,11 @@ type Wrapper interface {
 	WrapError(err error) error
 }
 
-var _ Wrapper = WrapperFunc(nil)
+var _ = []Wrapper{
+	WrapperFunc(nil),
+	Context{},
+	Message(""),
+}
 
 // WrapperFunc is an adaptor to use function as the Wrapper interface.
 type WrapperFunc func(err error) error
@@ -48,22 +52,26 @@ func (f WrapperFunc) WrapError(err error) error {
 	return f(err)
 }
 
-// Message appends an error message to the err.
-func Message(msg string) Wrapper {
-	return WrapperFunc(func(err error) error {
-		return &withMessage{msg, err}
-	})
+// Message is a wrapper which appends message to an error.
+type Message string
+
+// String returns underlying string message.
+func (m Message) String() string {
+	return string(m)
 }
 
-// Messagef appends formatted error message to an error.
-func Messagef(format string, args ...interface{}) Wrapper {
-	return WrapperFunc(func(err error) error {
-		return &withMessage{fmt.Sprintf(format, args...), err}
-	})
+// WrapError implements Wrapper interface.
+func (m Message) WrapError(err error) error {
+	return &withMessage{m, err}
+}
+
+// Messagef returns Message with formatting.
+func Messagef(format string, args ...interface{}) Message {
+	return Message(fmt.Sprintf(format, args...))
 }
 
 type withMessage struct {
-	message    string
+	message    Message
 	underlying error
 }
 
@@ -80,8 +88,17 @@ func (w *withMessage) Unwrap() error {
 	return w.underlying
 }
 
+// Deprecated: Please use As method on Iterator.
 func (w *withMessage) GetMessage() string {
-	return w.message
+	return w.message.String()
+}
+
+func (w *withMessage) As(x interface{}) bool {
+	if m, ok := x.(*Message); ok {
+		*m = w.message
+		return true
+	}
+	return false
 }
 
 // MessageOf extracts a message from the err.
@@ -90,15 +107,11 @@ func MessageOf(err error) (string, bool) {
 		return "", false
 	}
 
-	type messageGetter interface {
-		GetMessage() string
-	}
-
 	i := NewIterator(err)
 	for i.Next() {
-		err := i.Error()
-		if g, ok := err.(messageGetter); ok {
-			return g.GetMessage(), true
+		var msg Message
+		if i.As(&msg) {
+			return msg.String(), true
 		}
 	}
 
@@ -151,8 +164,17 @@ func (w *withContext) Unwrap() error {
 	return w.underlying
 }
 
+// Deprecated: Please use As method on Iterator.
 func (m *withContext) GetContext() Context {
 	return m.ctx
+}
+
+func (w *withContext) As(x interface{}) bool {
+	if c, ok := x.(*Context); ok {
+		*c = w.ctx
+		return true
+	}
+	return false
 }
 
 // WithCallStackSkip appends a call stack to the err skipping first N frames.
@@ -186,8 +208,17 @@ func (w *withCallStack) Unwrap() error {
 	return w.underlying
 }
 
+// Deprecated: Please use As method on Iterator.
 func (w *withCallStack) GetCallStack() CallStack {
 	return w.callStack
+}
+
+func (w *withCallStack) As(x interface{}) bool {
+	if cs, ok := x.(*CallStack); ok {
+		*cs = w.callStack
+		return true
+	}
+	return false
 }
 
 // CallStackOf extracts a call stack from the err.
@@ -197,23 +228,16 @@ func CallStackOf(err error) (CallStack, bool) {
 		return nil, false
 	}
 
-	type callStackGetter interface {
-		GetCallStack() CallStack
-	}
-
-	var last CallStack
+	var (
+		last   CallStack
+		exists bool
+	)
 	i := NewIterator(err)
 	for i.Next() {
-		err := i.Error()
-		if g, ok := err.(callStackGetter); ok {
-			last = g.GetCallStack()
-		}
+		exists = i.As(&last) || exists
 	}
 
-	if last == nil {
-		return nil, false
-	}
-	return last, true
+	return last, exists
 }
 
 // WithFormatter appends an error formatter to the err.
@@ -264,18 +288,6 @@ func (f *formatter) Format(s fmt.State, verb rune) {
 	}
 
 	// %+v
-	type callStacker interface {
-		GetCallStack() CallStack
-	}
-	type contexter interface {
-		GetContext() Context
-	}
-	type messenger interface {
-		GetMessage() string
-	}
-	type coder interface {
-		GetCode() Code
-	}
 	type formatter interface {
 		IsFormatter()
 	}
@@ -283,20 +295,26 @@ func (f *formatter) Format(s fmt.State, verb rune) {
 	i := NewIterator(f.error)
 	for i.Next() {
 		err := i.Error()
-		switch t := err.(type) {
-		case callStacker:
-			fmt.Fprintf(s, "%+v\n", t.GetCallStack().HeadFrame())
-		case contexter:
-			kv := t.GetContext()
-			for k, v := range kv {
+		if _, ok := err.(formatter); ok {
+			continue
+		}
+		var (
+			cs   CallStack
+			ctx  Context
+			msg  Message
+			code Code
+		)
+		switch {
+		case i.As(&cs):
+			fmt.Fprintf(s, "%+v\n", cs.HeadFrame())
+		case i.As(&ctx):
+			for k, v := range ctx {
 				fmt.Fprintf(s, "    %s = %s\n", k, v)
 			}
-		case messenger:
-			fmt.Fprintf(s, "    message(%q)\n", t.GetMessage())
-		case coder:
-			fmt.Fprintf(s, "    code(%s)\n", t.GetCode().ErrorCode())
-		case formatter:
-			// do nothing
+		case i.As(&msg):
+			fmt.Fprintf(s, "    message(%q)\n", msg)
+		case i.As(&code):
+			fmt.Fprintf(s, "    code(%s)\n", code.ErrorCode())
 		default:
 			fmt.Fprintf(s, "    %T(%q)\n", err, err.Error())
 		}
