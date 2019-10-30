@@ -12,8 +12,6 @@ type Failure interface {
 	GetCode() Code
 }
 
-var _ = (*withCode)(nil)
-
 // CodeOf extracts an error code from the err.
 func CodeOf(err error) (Code, bool) {
 	if err == nil {
