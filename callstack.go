@@ -98,7 +98,7 @@ func Callers(skip int) CallStack {
 
 // Frame represents a stack frame.
 type Frame interface {
-	// Path returns a full path to the file.
+	// Path returns a absolute path to the file.
 	Path() string
 	// File returns a file name.
 	File() string

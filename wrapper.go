@@ -79,7 +79,7 @@ func (w *withMessage) Error() string {
 	return fmt.Sprintf("%s: %s", w.message, w.underlying)
 }
 
-// Deprecated: use Unwrap
+// Deprecated: This function will be deleted in v1.0.0 release. Please use Unwrap.
 func (w *withMessage) UnwrapError() error {
 	return w.Unwrap()
 }
@@ -88,7 +88,7 @@ func (w *withMessage) Unwrap() error {
 	return w.underlying
 }
 
-// Deprecated: Please use As method on Iterator.
+// Deprecated: This function will be deleted in v1.0.0 release. Please use As method on Iterator.
 func (w *withMessage) GetMessage() string {
 	return w.message.String()
 }
@@ -155,7 +155,7 @@ func (m *withContext) Error() string {
 	return fmt.Sprintf("%s: %s", m.memo, m.underlying)
 }
 
-// Deprecated: use Unwrap
+// Deprecated: This function will be deleted in v1.0.0 release. Please use Unwrap.
 func (w *withContext) UnwrapError() error {
 	return w.Unwrap()
 }
@@ -164,7 +164,7 @@ func (w *withContext) Unwrap() error {
 	return w.underlying
 }
 
-// Deprecated: Please use As method on Iterator.
+// Deprecated: This function will be deleted in v1.0.0 release. Please use As method on Iterator.
 func (m *withContext) GetContext() Context {
 	return m.ctx
 }
@@ -199,7 +199,7 @@ func (w *withCallStack) Error() string {
 	return fmt.Sprintf("%s.%s: %s", head.Pkg(), head.Func(), w.underlying)
 }
 
-// Deprecated: use Unwrap
+// Deprecated: This function will be deleted in v1.0.0 release. Please use Unwrap.
 func (w *withCallStack) UnwrapError() error {
 	return w.Unwrap()
 }
@@ -208,7 +208,7 @@ func (w *withCallStack) Unwrap() error {
 	return w.underlying
 }
 
-// Deprecated: Please use As method on Iterator.
+// Deprecated: This function will be deleted in v1.0.0 release. Please use As method on Iterator.
 func (w *withCallStack) GetCallStack() CallStack {
 	return w.callStack
 }
@@ -257,7 +257,7 @@ type formatter struct {
 	error
 }
 
-// Deprecated: use Unwrap
+// Deprecated: This function will be deleted in v1.0.0 release. Please use Unwrap.
 func (w *formatter) UnwrapError() error {
 	return w.Unwrap()
 }
