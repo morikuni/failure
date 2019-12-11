@@ -127,22 +127,22 @@ func MessageOf(err error) (string, bool) {
 type Context map[string]string
 
 // WrapError implements the Wrapper interface.
-func (m Context) WrapError(err error) error {
-	keys := make([]string, 0, len(m))
-	for k := range m {
+func (c Context) WrapError(err error) error {
+	keys := make([]string, 0, len(c))
+	for k := range c {
 		keys = append(keys, k)
 	}
 	sort.Slice(keys, func(i, j int) bool { return keys[i] < keys[j] })
 
 	buf := &bytes.Buffer{}
 	for _, k := range keys {
-		v := m[k]
+		v := c[k]
 		if buf.Len() != 0 {
 			buf.WriteRune(' ')
 		}
 		fmt.Fprintf(buf, "%s=%s", k, v)
 	}
-	return &withContext{m, buf.String(), err}
+	return &withContext{c, buf.String(), err}
 }
 
 type withContext struct {
@@ -151,8 +151,8 @@ type withContext struct {
 	underlying error
 }
 
-func (m *withContext) Error() string {
-	return fmt.Sprintf("%s: %s", m.memo, m.underlying)
+func (w *withContext) Error() string {
+	return fmt.Sprintf("%s: %s", w.memo, w.underlying)
 }
 
 // Deprecated: This function will be deleted in v1.0.0 release. Please use Unwrap.
@@ -165,8 +165,8 @@ func (w *withContext) Unwrap() error {
 }
 
 // Deprecated: This function will be deleted in v1.0.0 release. Please use As method on Iterator.
-func (m *withContext) GetContext() Context {
-	return m.ctx
+func (w *withContext) GetContext() Context {
+	return w.ctx
 }
 
 func (w *withContext) As(x interface{}) bool {
@@ -258,15 +258,15 @@ type formatter struct {
 }
 
 // Deprecated: This function will be deleted in v1.0.0 release. Please use Unwrap.
-func (w *formatter) UnwrapError() error {
-	return w.Unwrap()
+func (f *formatter) UnwrapError() error {
+	return f.Unwrap()
 }
 
-func (w *formatter) Unwrap() error {
-	return w.error
+func (f *formatter) Unwrap() error {
+	return f.error
 }
 
-func (f *formatter) IsFormatter() {}
+func (*formatter) IsFormatter() {}
 
 func (f *formatter) Format(s fmt.State, verb rune) {
 	if verb != 'v' { // %s

@@ -106,21 +106,21 @@ func (w *withCode) Unwrap() error {
 }
 
 // Deprecated: This function will be deleted in v1.0.0 release. Please use As method on Iterator.
-func (f *withCode) GetCode() Code {
-	return f.code
+func (w *withCode) GetCode() Code {
+	return w.code
 }
 
-func (f *withCode) As(x interface{}) bool {
+func (w *withCode) As(x interface{}) bool {
 	if c, ok := x.(*Code); ok {
-		*c = f.code
+		*c = w.code
 		return true
 	}
 	return false
 }
 
-func (f *withCode) Error() string {
-	if f.underlying == nil {
-		return fmt.Sprintf("code(%s)", f.code.ErrorCode())
+func (w *withCode) Error() string {
+	if w.underlying == nil {
+		return fmt.Sprintf("code(%s)", w.code.ErrorCode())
 	}
-	return fmt.Sprintf("code(%s): %s", f.code.ErrorCode(), f.underlying)
+	return fmt.Sprintf("code(%s): %s", w.code.ErrorCode(), w.underlying)
 }
