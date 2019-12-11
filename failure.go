@@ -7,6 +7,7 @@ import (
 )
 
 // Failure represents an error with error code.
+// Deprecated: This interface will be deleted in v1.0.0 release.
 type Failure interface {
 	error
 	GetCode() Code
@@ -31,7 +32,7 @@ func CodeOf(err error) (Code, bool) {
 
 // New creates an error from error code.
 func New(code Code, wrappers ...Wrapper) error {
-	return Custom(Custom(NewFailure(code), wrappers...), WithFormatter(), WithCallStackSkip(1))
+	return Custom(Custom(&withCode{code: code}, wrappers...), WithFormatter(), WithCallStackSkip(1))
 }
 
 // Translate translates the err to an error with given code.
@@ -76,6 +77,7 @@ func Unexpected(msg string, wrappers ...Wrapper) error {
 // NewFailure returns Failure without any wrappers.
 // You don't have to use this directly, unless using function Custom.
 // Basically, you can use function New instead of this.
+// Deprecated: This function will be deleted in v1.0.0 release. Please use New.
 func NewFailure(code Code) Failure {
 	return &withCode{code: code}
 }
@@ -94,7 +96,7 @@ type withCode struct {
 	underlying error
 }
 
-// Deprecated: use Unwrap
+// Deprecated: This function will be deleted in v1.0.0 release. Please use Unwrap.
 func (w *withCode) UnwrapError() error {
 	return w.Unwrap()
 }
@@ -103,7 +105,7 @@ func (w *withCode) Unwrap() error {
 	return w.underlying
 }
 
-// Deprecated: Please use As method on Iterator.
+// Deprecated: This function will be deleted in v1.0.0 release. Please use As method on Iterator.
 func (f *withCode) GetCode() Code {
 	return f.code
 }
