@@ -21,6 +21,10 @@ func CodeOf(err error) (Code, bool) {
 
 	i := NewIterator(err)
 	for i.Next() {
+		if noCode, ok := i.Error().(interface{ NoCode() bool }); ok && noCode.NoCode() {
+			return nil, false
+		}
+
 		var c Code
 		if i.As(&c) {
 			return c, true
@@ -46,6 +50,14 @@ func Translate(err error, code Code, wrappers ...Wrapper) error {
 // call stack and formatter.
 func Wrap(err error, wrappers ...Wrapper) error {
 	return Custom(Custom(err, wrappers...), WithFormatter(), WithCallStackSkip(1))
+}
+
+// Unknown wraps error by erasing error code from underlying error.
+// It is used where an error may have error code but expecting it does not happen.
+// The returned error does not return code from function CodeOf.
+// Unknown may erase also message without notice until v1.0.0 release.
+func Unknown(err error, wrappers ...Wrapper) error {
+	return Custom(Custom(Custom(err, WithoutCode()), wrappers...), WithFormatter(), WithCallStackSkip(1))
 }
 
 // Custom is the general error wrapping constructor.
@@ -123,4 +135,29 @@ func (w *withCode) Error() string {
 		return fmt.Sprintf("code(%s)", w.code.ErrorCode())
 	}
 	return fmt.Sprintf("code(%s): %s", w.code.ErrorCode(), w.underlying)
+}
+
+// WithoutCode erases code from error.
+// You don't have to use this directly, unless using function Custom.
+// Basically, you can use function XXX instead of this.
+func WithoutCode() Wrapper {
+	return WrapperFunc(func(err error) error {
+		return &withoutCode{err}
+	})
+}
+
+type withoutCode struct {
+	underlying error
+}
+
+func (w *withoutCode) Unwrap() error {
+	return w.underlying
+}
+
+func (w *withoutCode) Error() string {
+	return fmt.Sprintf("erase_code: %s", w.underlying)
+}
+
+func (*withoutCode) NoCode() bool {
+	return true
 }

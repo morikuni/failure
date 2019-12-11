@@ -163,3 +163,21 @@ func BenchmarkFailure(b *testing.B) {
 		failure.Wrap(failure.Translate(failure.New(failure.StringCode("error")), failure.StringCode("failure")))
 	}
 }
+
+func TestUnknown(t *testing.T) {
+	err1 := failure.Unknown(failure.New(TestCodeA), failure.Message("test"))
+
+	c, ok := failure.CodeOf(err1)
+	shouldEqual(t, nil, c)
+	shouldEqual(t, false, ok)
+
+	msg, ok := failure.MessageOf(err1)
+	shouldEqual(t, "test", msg)
+	shouldEqual(t, true, ok)
+
+	err2 := failure.Translate(err1, TestCodeB)
+
+	c, ok = failure.CodeOf(err2)
+	shouldEqual(t, TestCodeB, c)
+	shouldEqual(t, true, ok)
+}

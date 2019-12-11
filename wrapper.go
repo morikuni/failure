@@ -29,6 +29,7 @@ var _ = []interface{ Unwrap() error }{
 	(*withCallStack)(nil),
 	(*formatter)(nil),
 	(*withCode)(nil),
+	(*withoutCode)(nil),
 }
 
 // Wrapper interface is used by constructor functions.
