@@ -52,11 +52,11 @@ func Wrap(err error, wrappers ...Wrapper) error {
 	return Custom(Custom(err, wrappers...), WithFormatter(), WithCallStackSkip(1))
 }
 
-// Unknown wraps error by erasing error code from underlying error.
+// MarkUnknown wraps err by erasing error code from underlying error.
 // It is used where an error may have error code but expecting it does not happen.
-// The returned error does not return code from function CodeOf.
-// Unknown may erase also message without notice until v1.0.0 release.
-func Unknown(err error, wrappers ...Wrapper) error {
+// The returned error does not return error code from function CodeOf.
+// MarkUnknown may erase also message without notice until v1.0.0 release.
+func MarkUnknown(err error, wrappers ...Wrapper) error {
 	return Custom(Custom(Custom(err, WithoutCode()), wrappers...), WithFormatter(), WithCallStackSkip(1))
 }
 
