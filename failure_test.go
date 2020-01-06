@@ -164,8 +164,8 @@ func BenchmarkFailure(b *testing.B) {
 	}
 }
 
-func TestMarkUnknown(t *testing.T) {
-	err1 := failure.MarkUnknown(failure.New(TestCodeA), failure.Message("test"))
+func TestMarkUnExpected(t *testing.T) {
+	err1 := failure.MarkUnexpected(failure.New(TestCodeA), failure.Message("test"))
 
 	c, ok := failure.CodeOf(err1)
 	shouldEqual(t, nil, c)
