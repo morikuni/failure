@@ -96,6 +96,15 @@ func TestFailure(t *testing.T) {
 			wantStackLine: 91,
 			wantError:     "failure_test.TestFailure: aaa=1: unexpected error",
 		},
+		"mark unexpected": {
+			err: failure.MarkUnexpected(base),
+
+			shouldNil:     false,
+			wantCode:      nil,
+			wantMessage:   "xxx",
+			wantStackLine: 17,
+			wantError:     "failure_test.TestFailure: code_eliminated: failure_test.TestFailure: xxx: zzz=true: code(code_a)",
+		},
 	}
 
 	for title, test := range tests {
@@ -146,14 +155,14 @@ func TestFailure_Format(t *testing.T) {
 	exp := `&failure.formatter{error:\(\*failure.withCallStack\)\(.*`
 	shouldMatch(t, fmt.Sprintf("%#v", err), exp)
 
-	exp = `\[failure_test.TestFailure_Format\] /.*/github.com/morikuni/failure/failure_test.go:140
-\[failure_test.TestFailure_Format\] /.*/github.com/morikuni/failure/failure_test.go:139
+	exp = `\[failure_test.TestFailure_Format\] /.*/github.com/morikuni/failure/failure_test.go:149
+\[failure_test.TestFailure_Format\] /.*/github.com/morikuni/failure/failure_test.go:148
     message\("xxx"\)
     zzz = true
     code\(code_a\)
     \*errors.errorString\("yyy"\)
 \[CallStack\]
-    \[failure_test.TestFailure_Format\] /.*/github.com/morikuni/failure/failure_test.go:139
+    \[failure_test.TestFailure_Format\] /.*/github.com/morikuni/failure/failure_test.go:148
     \[.*`
 	shouldMatch(t, fmt.Sprintf("%+v", err), exp)
 }
