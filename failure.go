@@ -14,6 +14,9 @@ type Failure interface {
 }
 
 // CodeOf extracts an error code from the err.
+// The first error code found in the err is returned, but if Unexpected
+// interface is detected before the code is found, it behaves as if
+// there is no code found.
 func CodeOf(err error) (Code, bool) {
 	if err == nil {
 		return nil, false
@@ -21,7 +24,7 @@ func CodeOf(err error) (Code, bool) {
 
 	i := NewIterator(err)
 	for i.Next() {
-		if noCode, ok := i.Error().(interface{ NoCode() bool }); ok && noCode.NoCode() {
+		if v, ok := i.Error().(interface{ Unexpected() bool }); ok && v.Unexpected() {
 			return nil, false
 		}
 
@@ -56,7 +59,7 @@ func Wrap(err error, wrappers ...Wrapper) error {
 // It is used where an error can be returned but expecting it does not happen.
 // The returned error does not return error code from function CodeOf.
 func MarkUnexpected(err error, wrappers ...Wrapper) error {
-	return Custom(Custom(Custom(err, WithoutCode()), wrappers...), WithFormatter(), WithCallStackSkip(1))
+	return Custom(Custom(Custom(err, WithUnexpected()), wrappers...), WithFormatter(), WithCallStackSkip(1))
 }
 
 // Custom is the general error wrapping constructor.
@@ -77,6 +80,10 @@ type unexpected string
 
 func (e unexpected) Error() string {
 	return string(e)
+}
+
+func (e unexpected) Unexpected() bool {
+	return true
 }
 
 // Unexpected creates an error from message without error code.
@@ -139,6 +146,7 @@ func (w *withCode) Error() string {
 // WithoutCode prevents propagation of error code from underlying error
 // You don't have to use this directly, unless using function Custom.
 // Basically, you can use function MarkUnexpected instead of this.
+// Deprecated: This function will be deleted in v1.0.0 release. Please use WithUnexpected.
 func WithoutCode() Wrapper {
 	return WrapperFunc(func(err error) error {
 		return &withoutCode{err}

@@ -30,6 +30,7 @@ var _ = []interface{ Unwrap() error }{
 	(*formatter)(nil),
 	(*withCode)(nil),
 	(*withoutCode)(nil),
+	(*withUnexpected)(nil),
 }
 
 // Wrapper interface is used by constructor functions.
@@ -327,4 +328,29 @@ func (f *formatter) Format(s fmt.State, verb rune) {
 			fmt.Fprintf(s, "    %+v\n", f)
 		}
 	}
+}
+
+// WithUnexpected wraps the err to mark it is unexpected.
+// You don't have to use this directly, unless using function Custom.
+// Please use Unexpected or MarkUnexpected.
+func WithUnexpected() Wrapper {
+	return WrapperFunc(func(err error) error {
+		return &withUnexpected{err}
+	})
+}
+
+type withUnexpected struct {
+	underlying error
+}
+
+func (w *withUnexpected) Unwrap() error {
+	return w.underlying
+}
+
+func (w *withUnexpected) Error() string {
+	return fmt.Sprintf("unexpected: %s", w.underlying)
+}
+
+func (*withUnexpected) Unexpected() bool {
+	return true
 }
