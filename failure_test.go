@@ -103,7 +103,7 @@ func TestFailure(t *testing.T) {
 			wantCode:      nil,
 			wantMessage:   "xxx",
 			wantStackLine: 17,
-			wantError:     "failure_test.TestFailure: code_eliminated: failure_test.TestFailure: xxx: zzz=true: code(code_a)",
+			wantError:     "failure_test.TestFailure: unexpected: failure_test.TestFailure: xxx: zzz=true: code(code_a)",
 		},
 	}
 
