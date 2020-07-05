@@ -2,10 +2,10 @@ package failure
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
-	"sort"
-
 	"io"
+	"sort"
 )
 
 // Unwrapper interface is used by iterator.
@@ -251,12 +251,27 @@ func CallStackOf(err error) (CallStack, bool) {
 // You don't have to use this directly, unless using function Custom.
 func WithFormatter() Wrapper {
 	return WrapperFunc(func(err error) error {
-		return &formatter{err}
+		return &formatter{error: err}
 	})
 }
 
 type formatter struct {
-	error
+	error     `json:"-"`
+	Detail    []jsonDetail `json:"detail"`
+	CallStack []jsonFrame  `json:"callStack"`
+}
+
+type jsonDetail struct {
+	jsonFrame `json:"frame"`
+	Context   map[string]string `json:"context,omitempty"`
+	Message   *string           `json:"message,omitempty"`
+	Code      *string           `json:"code,omitempty"`
+	RawError  *string           `json:"rawError,omitempty"`
+}
+
+type jsonFrame struct {
+	Func   string `json:"func"`
+	Source string `json:"source"`
 }
 
 // Deprecated: This function will be deleted in v1.0.0 release. Please use Unwrap.
@@ -328,6 +343,85 @@ func (f *formatter) Format(s fmt.State, verb rune) {
 			fmt.Fprintf(s, "    %+v\n", f)
 		}
 	}
+}
+
+func JSONFormat(err error) []byte {
+	type jsonFormatter interface {
+		JSON() ([]byte, error)
+	}
+	jf := err.(jsonFormatter)
+	b, _ := jf.JSON()
+	return b
+}
+
+func (f *formatter) JSON() ([]byte, error) {
+	var detail *jsonDetail
+
+	type formatter interface {
+		IsFormatter()
+	}
+
+	i := NewIterator(f.error)
+	for i.Next() {
+		err := i.Error()
+		if _, ok := err.(formatter); ok {
+			continue
+		}
+
+		var (
+			cs    CallStack
+			ctx   Context
+			msg   Message
+			code  Code
+			frame Frame
+		)
+
+		switch {
+		case i.As(&cs):
+			if detail != nil {
+				f.Detail = append(f.Detail, *detail)
+			}
+			detail = new(jsonDetail)
+			frame = cs.HeadFrame()
+			detail.jsonFrame.Func = fmt.Sprintf("%s.%s ", frame.Pkg(), frame.Func())
+			detail.jsonFrame.Source = fmt.Sprintf(" %s:%d ", frame.Path(), frame.Line())
+		case i.As(&ctx):
+			detail.Context = make(map[string]string)
+			for k, v := range ctx {
+				detail.Context[k] = v
+			}
+		case i.As(&msg):
+			s := msg.String()
+			detail.Message = &s
+		case i.As(&code):
+			s := code.ErrorCode()
+			detail.Code = &s
+		default:
+			s := fmt.Sprintf("%T(%q)", err, err.Error())
+			detail.RawError = &s
+		}
+	}
+
+	if detail != nil {
+		f.Detail = append(f.Detail, *detail)
+	}
+
+	// reverse
+	for i, j := 0, len(f.Detail)-1; i < j; i, j = i+1, j-1 {
+		f.Detail[i], f.Detail[j] = f.Detail[j], f.Detail[i]
+	}
+
+	if cs, ok := CallStackOf(f); ok {
+		for _, frame := range cs.Frames() {
+			frame := jsonFrame{
+				Func:   fmt.Sprintf("%s.%s", frame.Pkg(), frame.Func()),
+				Source: fmt.Sprintf(" %s:%d ", frame.Path(), frame.Line()),
+			}
+			f.CallStack = append(f.CallStack, frame)
+		}
+	}
+
+	return json.Marshal(f)
 }
 
 // WithUnexpected wraps the err to mark it is unexpected.
