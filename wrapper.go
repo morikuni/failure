@@ -262,11 +262,16 @@ type formatter struct {
 }
 
 type jsonDetail struct {
-	jsonFrame `json:"frame"`
-	Context   map[string]string `json:"context,omitempty"`
-	Message   *string           `json:"message,omitempty"`
-	Code      *string           `json:"code,omitempty"`
-	RawError  *string           `json:"rawError,omitempty"`
+	jsonFrame     `json:"frame"`
+	Context       map[string]string `json:"context,omitempty"`
+	Message       *string           `json:"message,omitempty"`
+	Code          *string           `json:"code,omitempty"`
+	*jsonRawError `json:"rawError,omitempty"`
+}
+
+type jsonRawError struct {
+	Type    string `json:"type"`
+	Message string `json:"message"`
 }
 
 type jsonFrame struct {
@@ -383,7 +388,7 @@ func (f *formatter) JSON() ([]byte, error) {
 			}
 			detail = new(jsonDetail)
 			frame = cs.HeadFrame()
-			detail.jsonFrame.Func = fmt.Sprintf("%s.%s ", frame.Pkg(), frame.Func())
+			detail.jsonFrame.Func = fmt.Sprintf("%s.%s", frame.Pkg(), frame.Func())
 			detail.jsonFrame.Source = fmt.Sprintf(" %s:%d ", frame.Path(), frame.Line())
 		case i.As(&ctx):
 			detail.Context = make(map[string]string)
@@ -397,8 +402,11 @@ func (f *formatter) JSON() ([]byte, error) {
 			s := code.ErrorCode()
 			detail.Code = &s
 		default:
-			s := fmt.Sprintf("%T(%q)", err, err.Error())
-			detail.RawError = &s
+			detail.jsonRawError = &jsonRawError{
+				Type:    fmt.Sprintf("%T", err),
+				Message: fmt.Sprintf("%q", err.Error()),
+			}
+
 		}
 	}
 
@@ -406,7 +414,7 @@ func (f *formatter) JSON() ([]byte, error) {
 		f.Detail = append(f.Detail, *detail)
 	}
 
-	// reverse
+	// reverse order
 	for i, j := 0, len(f.Detail)-1; i < j; i, j = i+1, j-1 {
 		f.Detail[i], f.Detail[j] = f.Detail[j], f.Detail[i]
 	}
