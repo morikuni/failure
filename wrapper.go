@@ -96,8 +96,12 @@ func (w *withMessage) GetMessage() string {
 }
 
 func (w *withMessage) As(x interface{}) bool {
-	if m, ok := x.(*Message); ok {
-		*m = w.message
+	switch t := x.(type) {
+	case *Message:
+		*t = w.message
+		return true
+	case VirtualStack:
+		t.Push(w.message)
 		return true
 	}
 	return false
@@ -172,8 +176,12 @@ func (w *withContext) GetContext() Context {
 }
 
 func (w *withContext) As(x interface{}) bool {
-	if c, ok := x.(*Context); ok {
-		*c = w.ctx
+	switch t := x.(type) {
+	case *Context:
+		*t = w.ctx
+		return true
+	case VirtualStack:
+		t.Push(w.ctx)
 		return true
 	}
 	return false
@@ -216,8 +224,12 @@ func (w *withCallStack) GetCallStack() CallStack {
 }
 
 func (w *withCallStack) As(x interface{}) bool {
-	if cs, ok := x.(*CallStack); ok {
-		*cs = w.callStack
+	switch t := x.(type) {
+	case *CallStack:
+		*t = w.callStack
+		return true
+	case VirtualStack:
+		t.Push(w.callStack)
 		return true
 	}
 	return false

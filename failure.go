@@ -129,11 +129,16 @@ func (w *withCode) GetCode() Code {
 }
 
 func (w *withCode) As(x interface{}) bool {
-	if c, ok := x.(*Code); ok {
-		*c = w.code
+	switch t := x.(type) {
+	case *Code:
+		*t = w.code
 		return true
+	case VirtualStack:
+		t.Push(w.code)
+		return true
+	default:
+		return false
 	}
-	return false
 }
 
 func (w *withCode) Error() string {
