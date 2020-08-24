@@ -48,12 +48,12 @@ func TestFailure(t *testing.T) {
 	tests := map[string]struct {
 		err error
 
-		shouldNil        bool
-		wantCode         failure.Code
-		wantMessage      string
-		wantStackLine    int
-		wantError        string
-		wantVirtualStack SliceStack
+		shouldNil      bool
+		wantCode       failure.Code
+		wantMessage    string
+		wantStackLine  int
+		wantError      string
+		wantSliceStack SliceStack
 	}{
 		"new": {
 			err: failure.New(TestCodeA, failure.Context{"aaa": "1"}),
@@ -63,8 +63,8 @@ func TestFailure(t *testing.T) {
 			wantMessage:   "",
 			wantStackLine: 59,
 			wantError:     "failure_test.TestFailure: aaa=1: code(code_a)",
-			wantVirtualStack: SliceStack{
-				"[TestFailure] /Users/morikuni/go/src/github.com/morikuni/failure/failure_test.go:59",
+			wantSliceStack: SliceStack{
+				"\\[TestFailure\\] .+github.com/morikuni/failure/failure_test.go:59",
 				"aaa = 1",
 				"code = code_a",
 			},
@@ -77,10 +77,10 @@ func TestFailure(t *testing.T) {
 			wantMessage:   "xxx",
 			wantStackLine: 47,
 			wantError:     "failure_test.TestFailure: code(1): failure_test.TestFailure: xxx: zzz=true: code(code_a)",
-			wantVirtualStack: SliceStack{
-				"[TestFailure] /Users/morikuni/go/src/github.com/morikuni/failure/failure_test.go:73",
+			wantSliceStack: SliceStack{
+				"\\[TestFailure\\] .+github.com/morikuni/failure/failure_test.go:73",
 				"code = 1",
-				"[TestFailure] /Users/morikuni/go/src/github.com/morikuni/failure/failure_test.go:47",
+				"\\[TestFailure\\] .+github.com/morikuni/failure/failure_test.go:47",
 				"message = xxx",
 				"zzz = true",
 				"code = code_a",
@@ -94,13 +94,13 @@ func TestFailure(t *testing.T) {
 			wantMessage:   "aaa: bbb",
 			wantStackLine: 47,
 			wantError:     "failure_test.TestFailure: aaa: bbb: ccc=1 ddd=2: code(1): failure_test.TestFailure: xxx: zzz=true: code(code_a)",
-			wantVirtualStack: SliceStack{
-				"[TestFailure] /Users/morikuni/go/src/github.com/morikuni/failure/failure_test.go:90",
+			wantSliceStack: SliceStack{
+				"\\[TestFailure\\] .+github.com/morikuni/failure/failure_test.go:90",
 				"message = aaa: bbb",
 				"ccc = 1",
 				"ddd = 2",
 				"code = 1",
-				"[TestFailure] /Users/morikuni/go/src/github.com/morikuni/failure/failure_test.go:47",
+				"\\[TestFailure\\] .+github.com/morikuni/failure/failure_test.go:47",
 				"message = xxx",
 				"zzz = true",
 				"code = code_a",
@@ -114,39 +114,39 @@ func TestFailure(t *testing.T) {
 			wantMessage:   "",
 			wantStackLine: 110,
 			wantError:     "failure_test.TestFailure: " + io.EOF.Error(),
-			wantVirtualStack: SliceStack{
-				"[TestFailure] /Users/morikuni/go/src/github.com/morikuni/failure/failure_test.go:110",
+			wantSliceStack: SliceStack{
+				"\\[TestFailure\\] .*github.com/morikuni/failure/failure_test.go:110",
 			},
 		},
 		"wrap nil": {
 			err: failure.Wrap(nil),
 
-			shouldNil:        true,
-			wantCode:         nil,
-			wantMessage:      "",
-			wantStackLine:    0,
-			wantError:        "",
-			wantVirtualStack: nil,
+			shouldNil:      true,
+			wantCode:       nil,
+			wantMessage:    "",
+			wantStackLine:  0,
+			wantError:      "",
+			wantSliceStack: nil,
 		},
 		"nil": {
 			err: nil,
 
-			shouldNil:        true,
-			wantCode:         nil,
-			wantMessage:      "",
-			wantStackLine:    0,
-			wantError:        "",
-			wantVirtualStack: nil,
+			shouldNil:      true,
+			wantCode:       nil,
+			wantMessage:    "",
+			wantStackLine:  0,
+			wantError:      "",
+			wantSliceStack: nil,
 		},
 		"custom": {
 			err: failure.Custom(io.EOF),
 
-			shouldNil:        false,
-			wantCode:         nil,
-			wantMessage:      "",
-			wantStackLine:    0,
-			wantError:        io.EOF.Error(),
-			wantVirtualStack: nil,
+			shouldNil:      false,
+			wantCode:       nil,
+			wantMessage:    "",
+			wantStackLine:  0,
+			wantError:      io.EOF.Error(),
+			wantSliceStack: nil,
 		},
 		"unexpected": {
 			err: failure.Unexpected("unexpected error", failure.Context{"aaa": "1"}),
@@ -156,8 +156,8 @@ func TestFailure(t *testing.T) {
 			wantMessage:   "",
 			wantStackLine: 152,
 			wantError:     "failure_test.TestFailure: aaa=1: unexpected error",
-			wantVirtualStack: SliceStack{
-				"[TestFailure] /Users/morikuni/go/src/github.com/morikuni/failure/failure_test.go:152",
+			wantSliceStack: SliceStack{
+				"\\[TestFailure\\] .*github.com/morikuni/failure/failure_test.go:152",
 				"aaa = 1",
 			},
 		},
@@ -169,9 +169,9 @@ func TestFailure(t *testing.T) {
 			wantMessage:   "xxx",
 			wantStackLine: 47,
 			wantError:     "failure_test.TestFailure: unexpected: failure_test.TestFailure: xxx: zzz=true: code(code_a)",
-			wantVirtualStack: SliceStack{
-				"[TestFailure] /Users/morikuni/go/src/github.com/morikuni/failure/failure_test.go:165",
-				"[TestFailure] /Users/morikuni/go/src/github.com/morikuni/failure/failure_test.go:47",
+			wantSliceStack: SliceStack{
+				"\\[TestFailure\\] .+github.com/morikuni/failure/failure_test.go:165",
+				"\\[TestFailure\\] .+github.com/morikuni/failure/failure_test.go:47",
 				"message = xxx",
 				"zzz = true",
 				"code = code_a",
@@ -214,7 +214,10 @@ func TestFailure(t *testing.T) {
 
 			var ss SliceStack
 			failure.AsVirtualStack(test.err, &ss)
-			shouldEqual(t, ss, test.wantVirtualStack)
+			for i := range ss {
+				want := test.wantSliceStack[i]
+				shouldMatch(t, ss[i], want)
+			}
 		})
 	}
 }
