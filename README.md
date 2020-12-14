@@ -5,51 +5,104 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/morikuni/failure)](https://goreportcard.com/report/github.com/morikuni/failure)
 [![codecov](https://codecov.io/gh/morikuni/failure/branch/master/graph/badge.svg)](https://codecov.io/gh/morikuni/failure)
 
-Package failure provides an error represented as error code and extensible error interface with wrappers.
+Package `failure` provides errors distinguished by error code instead of error value.
+It also provides various utilities such as:
 
-Use error code instead of error type.
+- Automatically generate awesome `err.Error` message generation for developers
+- Support returning error messages for end users
+- Easy-to-use stack trace
+- Adding error context like function parameter with key-value data
+- Extensible error chain
+
+## Usage
+
+At first, define error codes you use.
 
 ```go
-var NotFound failure.StringCode = "NotFound"
+const (
+	NotFound failure.StringCode = "NotFound"
+	InvalidArgument failure.StringCode = "InvalidArgument"
+	Internal failure.StringCode = "Internal"
+)
+```
 
-err := failure.New(NotFound)
+Using `failure.New`, return an error with error code  .
 
-if failure.Is(err, NotFound) { // true
-	r.WriteHeader(http.StatusNotFound)
+```go
+return failure.New(NotFound)
+```
+
+Handle the error with `failure.Is` and translate it into another error code with `failure.Translate`.
+
+```go
+if failure.Is(err, NotFound) {
+	return failure.Translate(err, Internal)
 }
 ```
 
-Wrap errors.
+If you want to just return the error, use `failure.Wrap`.
 
 ```go
-type Wrapper interface {
-	WrapError(err error) error
+if err != nil {
+	return failure.Wrap(err)
 }
-
-err := failure.Wrap(err, MarkTemporary())
 ```
 
-Unwrap errors with Iterator.
+An error context and message for end user can be attached.
 
 ```go
-type Unwrapper interface {
-	UnwrapError() error
+func Foo(a, b string) error {
+	return failure.New(InvalidArgument, 
+		failure.Context{"a": a, "b": b},
+		failure.Message("Given parameters are invalid!!"),
+	)
+}
+```
+
+Awesome error message for developers.
+
+```go
+func main() {
+	err := Bar()
+	fmt.Println(err)
+	fmt.Println("=====")
+	fmt.Printf("%+v\n", err)
 }
 
-i := failure.NewIterator(err)
-for i.Next() { // unwrap error
-	err := i.Error()
-	if e, ok := err.(Temporary); ok {
-		return e.IsTemporary()
+func Bar() error {
+	err := Foo("hello", "world")
+	if err != nil {
+		return failure.Wrap(err)
 	}
+	return nil
 }
 ```
 
-## Example
+```
+main.Bar: main.Foo: a=hello b=world: Given parameters are invalid!!: code(InvalidArgument)
+=====
+[main.Bar] /tmp/sandbox615088634/prog.go:25
+[main.Foo] /tmp/sandbox615088634/prog.go:31
+    a = hello
+    b = world
+    message("Given parameters are invalid!!")
+    code(InvalidArgument)
+[CallStack]
+    [main.Foo] /tmp/sandbox615088634/prog.go:31
+    [main.Bar] /tmp/sandbox615088634/prog.go:23
+    [main.main] /tmp/sandbox615088634/prog.go:16
+    [runtime.main] /usr/local/go-faketime/src/runtime/proc.go:204
+    [runtime.goexit] /usr/local/go-faketime/src/runtime/asm_amd64.s:1374
+```
 
-### You can try it on [The Go Playground](https://play.golang.org/p/Pmgm7-7J1_c)
+`package.FunctionName` like `main.Bar` and `main.Foo` is automatically added to error message.
+With `%+v` format, it prints the detailed error chain + the call stack of the first error.
 
-You can also see the example on GitHub by opening this.
+## Full Example for HTTP Server
+
+Try it on [The Go Playground](https://play.golang.org/p/Pmgm7-7J1_c)!
+
+Or click `▶` on the below to see the code.
 
 <details>
 	
