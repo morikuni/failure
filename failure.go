@@ -86,6 +86,16 @@ func (e unexpected) Unexpected() bool {
 	return true
 }
 
+func (e unexpected) As(x interface{}) bool {
+	switch t := x.(type) {
+	case VirtualStack:
+		t.Push(e)
+		return true
+	default:
+		return false
+	}
+}
+
 // Unexpected creates an error from message without error code.
 // The returned error should be kind of internal or unknown error.
 func Unexpected(msg string, wrappers ...Wrapper) error {

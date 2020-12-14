@@ -366,3 +366,13 @@ func (w *withUnexpected) Error() string {
 func (*withUnexpected) Unexpected() bool {
 	return true
 }
+
+func (*withUnexpected) As(x interface{}) bool {
+	switch t := x.(type) {
+	case VirtualStack:
+		t.Push(unexpected("mark unexpected"))
+		return true
+	default:
+		return false
+	}
+}
