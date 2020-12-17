@@ -2,11 +2,11 @@ package failure
 
 import "fmt"
 
-type VirtualStack interface {
+type Tracer interface {
 	Push(v interface{})
 }
 
-func AsVirtualStack(err error, vs VirtualStack) {
+func Trace(err error, vs Tracer) {
 	if err == nil {
 		return
 	}
@@ -17,9 +17,9 @@ func AsVirtualStack(err error, vs VirtualStack) {
 	}
 }
 
-type SliceStack []string
+type DefaultTracer []string
 
-func (s *SliceStack) Push(v interface{}) {
+func (s *DefaultTracer) Push(v interface{}) {
 	switch t := v.(type) {
 	case Code:
 		*s = append(*s, fmt.Sprintf("code = %s", t.ErrorCode()))

@@ -100,7 +100,7 @@ func (w *withMessage) As(x interface{}) bool {
 	case *Message:
 		*t = w.message
 		return true
-	case VirtualStack:
+	case Tracer:
 		t.Push(w.message)
 		return true
 	}
@@ -180,7 +180,7 @@ func (w *withContext) As(x interface{}) bool {
 	case *Context:
 		*t = w.ctx
 		return true
-	case VirtualStack:
+	case Tracer:
 		t.Push(w.ctx)
 		return true
 	}
@@ -228,7 +228,7 @@ func (w *withCallStack) As(x interface{}) bool {
 	case *CallStack:
 		*t = w.callStack
 		return true
-	case VirtualStack:
+	case Tracer:
 		t.Push(w.callStack)
 		return true
 	}
@@ -369,7 +369,7 @@ func (*withUnexpected) Unexpected() bool {
 
 func (*withUnexpected) As(x interface{}) bool {
 	switch t := x.(type) {
-	case VirtualStack:
+	case Tracer:
 		t.Push(unexpected("mark unexpected"))
 		return true
 	default:

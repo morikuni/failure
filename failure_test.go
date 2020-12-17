@@ -48,12 +48,12 @@ func TestFailure(t *testing.T) {
 	tests := map[string]struct {
 		err error
 
-		shouldNil      bool
-		wantCode       failure.Code
-		wantMessage    string
-		wantStackLine  int
-		wantError      string
-		wantSliceStack failure.SliceStack
+		shouldNil     bool
+		wantCode      failure.Code
+		wantMessage   string
+		wantStackLine int
+		wantError     string
+		wantTracer    failure.DefaultTracer
 	}{
 		"new": {
 			err: failure.New(TestCodeA, failure.Context{"aaa": "1"}),
@@ -63,7 +63,7 @@ func TestFailure(t *testing.T) {
 			wantMessage:   "",
 			wantStackLine: 59,
 			wantError:     "failure_test.TestFailure: aaa=1: code(code_a)",
-			wantSliceStack: failure.SliceStack{
+			wantTracer: failure.DefaultTracer{
 				"\\[TestFailure\\] .+github.com/morikuni/failure/failure_test.go:59",
 				"aaa = 1",
 				"code = code_a",
@@ -77,7 +77,7 @@ func TestFailure(t *testing.T) {
 			wantMessage:   "xxx",
 			wantStackLine: 47,
 			wantError:     "failure_test.TestFailure: code(1): failure_test.TestFailure: xxx: zzz=true: code(code_a)",
-			wantSliceStack: failure.SliceStack{
+			wantTracer: failure.DefaultTracer{
 				"\\[TestFailure\\] .+github.com/morikuni/failure/failure_test.go:73",
 				"code = 1",
 				"\\[TestFailure\\] .+github.com/morikuni/failure/failure_test.go:47",
@@ -94,7 +94,7 @@ func TestFailure(t *testing.T) {
 			wantMessage:   "aaa: bbb",
 			wantStackLine: 47,
 			wantError:     "failure_test.TestFailure: aaa: bbb: ccc=1 ddd=2: code(1): failure_test.TestFailure: xxx: zzz=true: code(code_a)",
-			wantSliceStack: failure.SliceStack{
+			wantTracer: failure.DefaultTracer{
 				"\\[TestFailure\\] .+github.com/morikuni/failure/failure_test.go:90",
 				"message = aaa: bbb",
 				"ccc = 1",
@@ -114,39 +114,39 @@ func TestFailure(t *testing.T) {
 			wantMessage:   "",
 			wantStackLine: 110,
 			wantError:     "failure_test.TestFailure: " + io.EOF.Error(),
-			wantSliceStack: failure.SliceStack{
+			wantTracer: failure.DefaultTracer{
 				"\\[TestFailure\\] .*github.com/morikuni/failure/failure_test.go:110",
 			},
 		},
 		"wrap nil": {
 			err: failure.Wrap(nil),
 
-			shouldNil:      true,
-			wantCode:       nil,
-			wantMessage:    "",
-			wantStackLine:  0,
-			wantError:      "",
-			wantSliceStack: nil,
+			shouldNil:     true,
+			wantCode:      nil,
+			wantMessage:   "",
+			wantStackLine: 0,
+			wantError:     "",
+			wantTracer:    nil,
 		},
 		"nil": {
 			err: nil,
 
-			shouldNil:      true,
-			wantCode:       nil,
-			wantMessage:    "",
-			wantStackLine:  0,
-			wantError:      "",
-			wantSliceStack: nil,
+			shouldNil:     true,
+			wantCode:      nil,
+			wantMessage:   "",
+			wantStackLine: 0,
+			wantError:     "",
+			wantTracer:    nil,
 		},
 		"custom": {
 			err: failure.Custom(io.EOF),
 
-			shouldNil:      false,
-			wantCode:       nil,
-			wantMessage:    "",
-			wantStackLine:  0,
-			wantError:      io.EOF.Error(),
-			wantSliceStack: nil,
+			shouldNil:     false,
+			wantCode:      nil,
+			wantMessage:   "",
+			wantStackLine: 0,
+			wantError:     io.EOF.Error(),
+			wantTracer:    nil,
 		},
 		"unexpected": {
 			err: failure.Unexpected("unexpected error", failure.Context{"aaa": "1"}),
@@ -156,7 +156,7 @@ func TestFailure(t *testing.T) {
 			wantMessage:   "",
 			wantStackLine: 152,
 			wantError:     "failure_test.TestFailure: aaa=1: unexpected error",
-			wantSliceStack: failure.SliceStack{
+			wantTracer: failure.DefaultTracer{
 				"\\[TestFailure\\] .*github.com/morikuni/failure/failure_test.go:152",
 				"aaa = 1",
 				"unexpected: unexpected error",
@@ -170,7 +170,7 @@ func TestFailure(t *testing.T) {
 			wantMessage:   "xxx",
 			wantStackLine: 47,
 			wantError:     "failure_test.TestFailure: unexpected: failure_test.TestFailure: xxx: zzz=true: code(code_a)",
-			wantSliceStack: failure.SliceStack{
+			wantTracer: failure.DefaultTracer{
 				"\\[TestFailure\\] .+github.com/morikuni/failure/failure_test.go:166",
 				"unexpected: mark unexpected",
 				"\\[TestFailure\\] .+github.com/morikuni/failure/failure_test.go:47",
@@ -214,10 +214,10 @@ func TestFailure(t *testing.T) {
 				shouldEqual(t, cs, nil)
 			}
 
-			var ss failure.SliceStack
-			failure.AsVirtualStack(test.err, &ss)
-			for i := range test.wantSliceStack {
-				want := test.wantSliceStack[i]
+			var ss failure.DefaultTracer
+			failure.Trace(test.err, &ss)
+			for i := range test.wantTracer {
+				want := test.wantTracer[i]
 				shouldMatch(t, ss[i], want)
 			}
 		})
