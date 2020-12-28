@@ -53,7 +53,7 @@ func TestFailure(t *testing.T) {
 		wantMessage   string
 		wantStackLine int
 		wantError     string
-		wantTracer    failure.DefaultTracer
+		wantTracer    failure.StringTracer
 	}{
 		"new": {
 			err: failure.New(TestCodeA, failure.Context{"aaa": "1"}),
@@ -63,7 +63,7 @@ func TestFailure(t *testing.T) {
 			wantMessage:   "",
 			wantStackLine: 59,
 			wantError:     "failure_test.TestFailure: aaa=1: code(code_a)",
-			wantTracer: failure.DefaultTracer{
+			wantTracer: failure.StringTracer{
 				"\\[TestFailure\\] .+github.com/morikuni/failure/failure_test.go:59",
 				"aaa = 1",
 				"code = code_a",
@@ -77,7 +77,7 @@ func TestFailure(t *testing.T) {
 			wantMessage:   "xxx",
 			wantStackLine: 47,
 			wantError:     "failure_test.TestFailure: code(1): failure_test.TestFailure: xxx: zzz=true: code(code_a)",
-			wantTracer: failure.DefaultTracer{
+			wantTracer: failure.StringTracer{
 				"\\[TestFailure\\] .+github.com/morikuni/failure/failure_test.go:73",
 				"code = 1",
 				"\\[TestFailure\\] .+github.com/morikuni/failure/failure_test.go:47",
@@ -94,7 +94,7 @@ func TestFailure(t *testing.T) {
 			wantMessage:   "aaa: bbb",
 			wantStackLine: 47,
 			wantError:     "failure_test.TestFailure: aaa: bbb: ccc=1 ddd=2: code(1): failure_test.TestFailure: xxx: zzz=true: code(code_a)",
-			wantTracer: failure.DefaultTracer{
+			wantTracer: failure.StringTracer{
 				"\\[TestFailure\\] .+github.com/morikuni/failure/failure_test.go:90",
 				"message = aaa: bbb",
 				"ccc = 1",
@@ -114,7 +114,7 @@ func TestFailure(t *testing.T) {
 			wantMessage:   "",
 			wantStackLine: 110,
 			wantError:     "failure_test.TestFailure: " + io.EOF.Error(),
-			wantTracer: failure.DefaultTracer{
+			wantTracer: failure.StringTracer{
 				"\\[TestFailure\\] .*github.com/morikuni/failure/failure_test.go:110",
 			},
 		},
@@ -156,7 +156,7 @@ func TestFailure(t *testing.T) {
 			wantMessage:   "",
 			wantStackLine: 152,
 			wantError:     "failure_test.TestFailure: aaa=1: unexpected error",
-			wantTracer: failure.DefaultTracer{
+			wantTracer: failure.StringTracer{
 				"\\[TestFailure\\] .*github.com/morikuni/failure/failure_test.go:152",
 				"aaa = 1",
 				"unexpected: unexpected error",
@@ -170,7 +170,7 @@ func TestFailure(t *testing.T) {
 			wantMessage:   "xxx",
 			wantStackLine: 47,
 			wantError:     "failure_test.TestFailure: unexpected: failure_test.TestFailure: xxx: zzz=true: code(code_a)",
-			wantTracer: failure.DefaultTracer{
+			wantTracer: failure.StringTracer{
 				"\\[TestFailure\\] .+github.com/morikuni/failure/failure_test.go:166",
 				"unexpected: mark unexpected",
 				"\\[TestFailure\\] .+github.com/morikuni/failure/failure_test.go:47",
@@ -214,7 +214,7 @@ func TestFailure(t *testing.T) {
 				shouldEqual(t, cs, nil)
 			}
 
-			var ss failure.DefaultTracer
+			var ss failure.StringTracer
 			failure.Trace(test.err, &ss)
 			for i := range test.wantTracer {
 				want := test.wantTracer[i]

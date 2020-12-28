@@ -17,30 +17,30 @@ func Trace(err error, vs Tracer) {
 	}
 }
 
-type DefaultTracer []string
+type StringTracer []string
 
-func (s *DefaultTracer) Push(v interface{}) {
+func (st *StringTracer) Push(v interface{}) {
 	switch t := v.(type) {
 	case Code:
-		*s = append(*s, fmt.Sprintf("code = %s", t.ErrorCode()))
+		*st = append(*st, fmt.Sprintf("code = %s", t.ErrorCode()))
 		return
 	case Message:
-		*s = append(*s, fmt.Sprintf("message = %s", t))
+		*st = append(*st, fmt.Sprintf("message = %s", t))
 		return
 	case CallStack:
 		head := t.HeadFrame()
-		*s = append(*s, fmt.Sprintf("[%s] %s:%d", head.Func(), head.Path(), head.Line()))
+		*st = append(*st, fmt.Sprintf("[%s] %s:%d", head.Func(), head.Path(), head.Line()))
 		return
 	case Context:
 		for k, v := range t {
-			*s = append(*s, fmt.Sprintf("%s = %s", k, v))
+			*st = append(*st, fmt.Sprintf("%s = %s", k, v))
 		}
 		return
 	case interface{ Unexpected() bool }:
 		if t.Unexpected() {
-			*s = append(*s, fmt.Sprintf("unexpected: %v", t))
+			*st = append(*st, fmt.Sprintf("unexpected: %v", t))
 			return
 		}
 	}
-	*s = append(*s, fmt.Sprintf("%T(%v)", v, v))
+	*st = append(*st, fmt.Sprintf("%T(%v)", v, v))
 }
