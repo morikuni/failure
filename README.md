@@ -5,18 +5,17 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/morikuni/failure)](https://goreportcard.com/report/github.com/morikuni/failure)
 [![codecov](https://codecov.io/gh/morikuni/failure/branch/master/graph/badge.svg)](https://codecov.io/gh/morikuni/failure)
 
-Package `failure` provides errors distinguished by error code instead of error value.
-It also provides various utilities such as:
+Package `failure` provides errors utilities for your application errors.
 
-- Automatically generate awesome `err.Error` message generation for developers
-- Support returning error messages for end users
-- Easy-to-use stack trace
-- Adding error context like function parameter with key-value data
-- Extensible error chain
+- Automatically generate awesome `err.Error` message for developers.
+- Flexible error messages for end users.
+- Powerful and readable stack trace.
+- Error context, such as function parameter, with key-value data.
+- Extensible error chain.
 
 ## Usage
 
-At first, define error codes you use.
+At first, define error codes for your application.
 
 ```go
 const (
@@ -26,7 +25,7 @@ const (
 )
 ```
 
-Using `failure.New`, return an error with error code  .
+Using `failure.New`, return an error with error code.
 
 ```go
 return failure.New(NotFound)
