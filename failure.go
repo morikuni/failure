@@ -86,6 +86,16 @@ func (e unexpected) Unexpected() bool {
 	return true
 }
 
+func (e unexpected) As(x interface{}) bool {
+	switch t := x.(type) {
+	case Tracer:
+		t.Push(e)
+		return true
+	default:
+		return false
+	}
+}
+
 // Unexpected creates an error from message without error code.
 // The returned error should be kind of internal or unknown error.
 func Unexpected(msg string, wrappers ...Wrapper) error {
@@ -129,11 +139,16 @@ func (w *withCode) GetCode() Code {
 }
 
 func (w *withCode) As(x interface{}) bool {
-	if c, ok := x.(*Code); ok {
-		*c = w.code
+	switch t := x.(type) {
+	case *Code:
+		*t = w.code
 		return true
+	case Tracer:
+		t.Push(w.code)
+		return true
+	default:
+		return false
 	}
-	return false
 }
 
 func (w *withCode) Error() string {

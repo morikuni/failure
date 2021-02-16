@@ -13,6 +13,36 @@ const (
 	TestCodeB failure.StringCode = "1"
 )
 
+func TestFailure_Format(t *testing.T) {
+	e1 := fmt.Errorf("yyy")
+	e2 := failure.Translate(e1, TestCodeA, failure.Message("xxx"), failure.Context{"zzz": "true"})
+	err := failure.Wrap(e2)
+
+	want := "failure_test.TestFailure_Format: failure_test.TestFailure_Format: xxx: zzz=true: code(code_a): yyy"
+	shouldEqual(t, fmt.Sprintf("%s", err), want)
+	shouldEqual(t, fmt.Sprintf("%v", err), want)
+
+	exp := `&failure.formatter{error:\(\*failure.withCallStack\)\(.*`
+	shouldMatch(t, fmt.Sprintf("%#v", err), exp)
+
+	exp = `\[failure_test.TestFailure_Format\] /.*/github.com/morikuni/failure/failure_test.go:19
+\[failure_test.TestFailure_Format\] /.*/github.com/morikuni/failure/failure_test.go:18
+    message\("xxx"\)
+    zzz = true
+    code\(code_a\)
+    \*errors.errorString\("yyy"\)
+\[CallStack\]
+    \[failure_test.TestFailure_Format\] /.*/github.com/morikuni/failure/failure_test.go:18
+    \[.*`
+	shouldMatch(t, fmt.Sprintf("%+v", err), exp)
+}
+
+func BenchmarkFailure(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		failure.Wrap(failure.Translate(failure.New(failure.StringCode("error")), failure.StringCode("failure")))
+	}
+}
+
 func TestFailure(t *testing.T) {
 	base := failure.New(TestCodeA, failure.Message("xxx"), failure.Context{"zzz": "true"})
 	tests := map[string]struct {
@@ -23,6 +53,7 @@ func TestFailure(t *testing.T) {
 		wantMessage   string
 		wantStackLine int
 		wantError     string
+		wantTracer    failure.StringTracer
 	}{
 		"new": {
 			err: failure.New(TestCodeA, failure.Context{"aaa": "1"}),
@@ -30,8 +61,13 @@ func TestFailure(t *testing.T) {
 			shouldNil:     false,
 			wantCode:      TestCodeA,
 			wantMessage:   "",
-			wantStackLine: 28,
+			wantStackLine: 59,
 			wantError:     "failure_test.TestFailure: aaa=1: code(code_a)",
+			wantTracer: failure.StringTracer{
+				"\\[TestFailure\\] .+github.com/morikuni/failure/failure_test.go:59",
+				"aaa = 1",
+				"code = code_a",
+			},
 		},
 		"translate": {
 			err: failure.Translate(base, TestCodeB),
@@ -39,8 +75,16 @@ func TestFailure(t *testing.T) {
 			shouldNil:     false,
 			wantCode:      TestCodeB,
 			wantMessage:   "xxx",
-			wantStackLine: 17,
+			wantStackLine: 47,
 			wantError:     "failure_test.TestFailure: code(1): failure_test.TestFailure: xxx: zzz=true: code(code_a)",
+			wantTracer: failure.StringTracer{
+				"\\[TestFailure\\] .+github.com/morikuni/failure/failure_test.go:73",
+				"code = 1",
+				"\\[TestFailure\\] .+github.com/morikuni/failure/failure_test.go:47",
+				"message = xxx",
+				"zzz = true",
+				"code = code_a",
+			},
 		},
 		"overwrite": {
 			err: failure.Translate(base, TestCodeB, failure.Messagef("aaa: %s", "bbb"), failure.Context{"ccc": "1", "ddd": "2"}),
@@ -48,8 +92,19 @@ func TestFailure(t *testing.T) {
 			shouldNil:     false,
 			wantCode:      TestCodeB,
 			wantMessage:   "aaa: bbb",
-			wantStackLine: 17,
+			wantStackLine: 47,
 			wantError:     "failure_test.TestFailure: aaa: bbb: ccc=1 ddd=2: code(1): failure_test.TestFailure: xxx: zzz=true: code(code_a)",
+			wantTracer: failure.StringTracer{
+				"\\[TestFailure\\] .+github.com/morikuni/failure/failure_test.go:90",
+				"message = aaa: bbb",
+				"ccc = 1",
+				"ddd = 2",
+				"code = 1",
+				"\\[TestFailure\\] .+github.com/morikuni/failure/failure_test.go:47",
+				"message = xxx",
+				"zzz = true",
+				"code = code_a",
+			},
 		},
 		"wrap": {
 			err: failure.Wrap(io.EOF),
@@ -57,8 +112,11 @@ func TestFailure(t *testing.T) {
 			shouldNil:     false,
 			wantCode:      nil,
 			wantMessage:   "",
-			wantStackLine: 55,
+			wantStackLine: 110,
 			wantError:     "failure_test.TestFailure: " + io.EOF.Error(),
+			wantTracer: failure.StringTracer{
+				"\\[TestFailure\\] .*github.com/morikuni/failure/failure_test.go:110",
+			},
 		},
 		"wrap nil": {
 			err: failure.Wrap(nil),
@@ -68,6 +126,7 @@ func TestFailure(t *testing.T) {
 			wantMessage:   "",
 			wantStackLine: 0,
 			wantError:     "",
+			wantTracer:    nil,
 		},
 		"nil": {
 			err: nil,
@@ -77,6 +136,7 @@ func TestFailure(t *testing.T) {
 			wantMessage:   "",
 			wantStackLine: 0,
 			wantError:     "",
+			wantTracer:    nil,
 		},
 		"custom": {
 			err: failure.Custom(io.EOF),
@@ -86,6 +146,7 @@ func TestFailure(t *testing.T) {
 			wantMessage:   "",
 			wantStackLine: 0,
 			wantError:     io.EOF.Error(),
+			wantTracer:    nil,
 		},
 		"unexpected": {
 			err: failure.Unexpected("unexpected error", failure.Context{"aaa": "1"}),
@@ -93,8 +154,13 @@ func TestFailure(t *testing.T) {
 			shouldNil:     false,
 			wantCode:      nil,
 			wantMessage:   "",
-			wantStackLine: 91,
+			wantStackLine: 152,
 			wantError:     "failure_test.TestFailure: aaa=1: unexpected error",
+			wantTracer: failure.StringTracer{
+				"\\[TestFailure\\] .*github.com/morikuni/failure/failure_test.go:152",
+				"aaa = 1",
+				"unexpected: unexpected error",
+			},
 		},
 		"mark unexpected": {
 			err: failure.MarkUnexpected(base),
@@ -102,8 +168,16 @@ func TestFailure(t *testing.T) {
 			shouldNil:     false,
 			wantCode:      nil,
 			wantMessage:   "xxx",
-			wantStackLine: 17,
+			wantStackLine: 47,
 			wantError:     "failure_test.TestFailure: unexpected: failure_test.TestFailure: xxx: zzz=true: code(code_a)",
+			wantTracer: failure.StringTracer{
+				"\\[TestFailure\\] .+github.com/morikuni/failure/failure_test.go:166",
+				"unexpected: mark unexpected",
+				"\\[TestFailure\\] .+github.com/morikuni/failure/failure_test.go:47",
+				"message = xxx",
+				"zzz = true",
+				"code = code_a",
+			},
 		},
 	}
 
@@ -139,36 +213,14 @@ func TestFailure(t *testing.T) {
 				shouldEqual(t, ok, false)
 				shouldEqual(t, cs, nil)
 			}
+
+			var ss failure.StringTracer
+			failure.Trace(test.err, &ss)
+			for i := range test.wantTracer {
+				want := test.wantTracer[i]
+				shouldMatch(t, ss[i], want)
+			}
 		})
 	}
 }
 
-func TestFailure_Format(t *testing.T) {
-	e1 := fmt.Errorf("yyy")
-	e2 := failure.Translate(e1, TestCodeA, failure.Message("xxx"), failure.Context{"zzz": "true"})
-	err := failure.Wrap(e2)
-
-	want := "failure_test.TestFailure_Format: failure_test.TestFailure_Format: xxx: zzz=true: code(code_a): yyy"
-	shouldEqual(t, fmt.Sprintf("%s", err), want)
-	shouldEqual(t, fmt.Sprintf("%v", err), want)
-
-	exp := `&failure.formatter{error:\(\*failure.withCallStack\)\(.*`
-	shouldMatch(t, fmt.Sprintf("%#v", err), exp)
-
-	exp = `\[failure_test.TestFailure_Format\] /.*/github.com/morikuni/failure/failure_test.go:149
-\[failure_test.TestFailure_Format\] /.*/github.com/morikuni/failure/failure_test.go:148
-    message\("xxx"\)
-    zzz = true
-    code\(code_a\)
-    \*errors.errorString\("yyy"\)
-\[CallStack\]
-    \[failure_test.TestFailure_Format\] /.*/github.com/morikuni/failure/failure_test.go:148
-    \[.*`
-	shouldMatch(t, fmt.Sprintf("%+v", err), exp)
-}
-
-func BenchmarkFailure(b *testing.B) {
-	for i := 0; i < b.N; i++ {
-		failure.Wrap(failure.Translate(failure.New(failure.StringCode("error")), failure.StringCode("failure")))
-	}
-}
