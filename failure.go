@@ -124,11 +124,6 @@ type withCode struct {
 	underlying error
 }
 
-// Deprecated: This function will be deleted in v1.0.0 release. Please use Unwrap.
-func (w *withCode) UnwrapError() error {
-	return w.Unwrap()
-}
-
 func (w *withCode) Unwrap() error {
 	return w.underlying
 }

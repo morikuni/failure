@@ -3,26 +3,9 @@ package failure
 import (
 	"bytes"
 	"fmt"
-	"sort"
-
 	"io"
+	"sort"
 )
-
-// Unwrapper interface is used by iterator.
-// Deprecated: Implement interface{ Unwrap() error }.
-type Unwrapper interface {
-	// UnwrapError should return nearest child error.
-	// The returned error can be nil.
-	UnwrapError() error
-}
-
-var _ = []Unwrapper{
-	(*withMessage)(nil),
-	(*withContext)(nil),
-	(*withCallStack)(nil),
-	(*formatter)(nil),
-	(*withCode)(nil),
-}
 
 var _ = []interface{ Unwrap() error }{
 	(*withMessage)(nil),
@@ -82,11 +65,6 @@ type withMessage struct {
 
 func (w *withMessage) Error() string {
 	return fmt.Sprintf("%s: %s", w.message, w.underlying)
-}
-
-// Deprecated: This function will be deleted in v1.0.0 release. Please use Unwrap.
-func (w *withMessage) UnwrapError() error {
-	return w.Unwrap()
 }
 
 func (w *withMessage) Unwrap() error {
@@ -164,11 +142,6 @@ func (w *withContext) Error() string {
 	return fmt.Sprintf("%s: %s", w.memo, w.underlying)
 }
 
-// Deprecated: This function will be deleted in v1.0.0 release. Please use Unwrap.
-func (w *withContext) UnwrapError() error {
-	return w.Unwrap()
-}
-
 func (w *withContext) Unwrap() error {
 	return w.underlying
 }
@@ -210,11 +183,6 @@ type withCallStack struct {
 func (w *withCallStack) Error() string {
 	head := w.callStack.HeadFrame()
 	return fmt.Sprintf("%s.%s: %s", head.Pkg(), head.Func(), w.underlying)
-}
-
-// Deprecated: This function will be deleted in v1.0.0 release. Please use Unwrap.
-func (w *withCallStack) UnwrapError() error {
-	return w.Unwrap()
 }
 
 func (w *withCallStack) Unwrap() error {
@@ -272,11 +240,6 @@ func WithFormatter() Wrapper {
 
 type formatter struct {
 	error
-}
-
-// Deprecated: This function will be deleted in v1.0.0 release. Please use Unwrap.
-func (f *formatter) UnwrapError() error {
-	return f.Unwrap()
 }
 
 func (f *formatter) Unwrap() error {

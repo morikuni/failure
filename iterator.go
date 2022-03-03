@@ -32,8 +32,6 @@ func (i *Iterator) unwrapError() error {
 	switch t := i.err.(type) {
 	case go113error:
 		return t.Unwrap()
-	case Unwrapper:
-		return t.UnwrapError()
 	case causer:
 		return t.Cause()
 	}
@@ -60,7 +58,7 @@ type guardianUnwapper struct {
 	error
 }
 
-func (w guardianUnwapper) UnwrapError() error {
+func (w guardianUnwapper) Unwrap() error {
 	return w.error
 }
 
