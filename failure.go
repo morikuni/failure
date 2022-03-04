@@ -6,13 +6,6 @@ import (
 	"fmt"
 )
 
-// Failure represents an error with error code.
-// Deprecated: This interface will be deleted in v1.0.0 release.
-type Failure interface {
-	error
-	GetCode() Code
-}
-
 // CodeOf extracts an error code from the err.
 // The first error code found in the err is returned, but if Unexpected
 // interface is detected before the code is found, it behaves as if
@@ -102,14 +95,6 @@ func Unexpected(msg string, wrappers ...Wrapper) error {
 	return Custom(Custom(unexpected(msg), wrappers...), WithFormatter(), WithCallStackSkip(1))
 }
 
-// NewFailure returns Failure without any wrappers.
-// You don't have to use this directly, unless using function Custom.
-// Basically, you can use function New instead of this.
-// Deprecated: This function will be deleted in v1.0.0 release. Please use New.
-func NewFailure(code Code) Failure {
-	return &withCode{code: code}
-}
-
 // WithCode appends code to an error.
 // You don't have to use this directly, unless using function Custom.
 // Basically, you can use function Translate instead of this.
@@ -126,11 +111,6 @@ type withCode struct {
 
 func (w *withCode) Unwrap() error {
 	return w.underlying
-}
-
-// Deprecated: This function will be deleted in v1.0.0 release. Please use As method on Iterator.
-func (w *withCode) GetCode() Code {
-	return w.code
 }
 
 func (w *withCode) As(x interface{}) bool {
