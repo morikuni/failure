@@ -132,29 +132,3 @@ func (w *withCode) Error() string {
 	}
 	return fmt.Sprintf("code(%s): %s", w.code.ErrorCode(), w.underlying)
 }
-
-// WithoutCode prevents propagation of error code from underlying error
-// You don't have to use this directly, unless using function Custom.
-// Basically, you can use function MarkUnexpected instead of this.
-// Deprecated: This function will be deleted in v1.0.0 release. Please use WithUnexpected.
-func WithoutCode() Wrapper {
-	return WrapperFunc(func(err error) error {
-		return &withoutCode{err}
-	})
-}
-
-type withoutCode struct {
-	underlying error
-}
-
-func (w *withoutCode) Unwrap() error {
-	return w.underlying
-}
-
-func (w *withoutCode) Error() string {
-	return fmt.Sprintf("code_eliminated: %s", w.underlying)
-}
-
-func (*withoutCode) NoCode() bool {
-	return true
-}
