@@ -71,11 +71,6 @@ func (w *withMessage) Unwrap() error {
 	return w.underlying
 }
 
-// Deprecated: This function will be deleted in v1.0.0 release. Please use As method on Iterator.
-func (w *withMessage) GetMessage() string {
-	return w.message.String()
-}
-
 func (w *withMessage) As(x interface{}) bool {
 	switch t := x.(type) {
 	case *Message:
