@@ -179,11 +179,6 @@ func (w *withCallStack) Unwrap() error {
 	return w.underlying
 }
 
-// Deprecated: This function will be deleted in v1.0.0 release. Please use As method on Iterator.
-func (w *withCallStack) GetCallStack() CallStack {
-	return w.callStack
-}
-
 func (w *withCallStack) As(x interface{}) bool {
 	switch t := x.(type) {
 	case *CallStack:
