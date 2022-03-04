@@ -141,11 +141,6 @@ func (w *withContext) Unwrap() error {
 	return w.underlying
 }
 
-// Deprecated: This function will be deleted in v1.0.0 release. Please use As method on Iterator.
-func (w *withContext) GetContext() Context {
-	return w.ctx
-}
-
 func (w *withContext) As(x interface{}) bool {
 	switch t := x.(type) {
 	case *Context:
