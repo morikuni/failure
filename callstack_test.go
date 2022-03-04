@@ -14,13 +14,13 @@ func X() failure.CallStack {
 func TestCallers(t *testing.T) {
 	fs := X().Frames()
 
-	shouldContain(t, fs[0].Path(), "github.com/morikuni/failure/callstack_test.go")
+	shouldContain(t, fs[0].Path(), "/failure/callstack_test.go")
 	shouldContain(t, fs[0].File(), "callstack_test.go")
 	shouldEqual(t, fs[0].Func(), "X")
 	shouldEqual(t, fs[0].Line(), 11)
 	shouldEqual(t, fs[0].Pkg(), "failure_test")
 
-	shouldContain(t, fs[1].Path(), "github.com/morikuni/failure/callstack_test.go")
+	shouldContain(t, fs[1].Path(), "/failure/callstack_test.go")
 	shouldContain(t, fs[1].File(), "callstack_test.go")
 	shouldEqual(t, fs[1].Func(), "TestCallers")
 	shouldEqual(t, fs[1].Line(), 15)
@@ -40,12 +40,12 @@ func TestCallStack_Format(t *testing.T) {
 	)
 	shouldMatch(t,
 		fmt.Sprintf("%#v", cs),
-		`\[\]failure.Frame{/.+/github.com/morikuni/failure/callstack_test.go:11, /.+/github.com/morikuni/failure/callstack_test.go:31, .*}`,
+		`\[\]failure.Frame{/.+/failure/callstack_test.go:11, /.+/failure/callstack_test.go:31, .*}`,
 	)
 	shouldMatch(t,
 		fmt.Sprintf("%+v", cs),
-		`\[failure_test.X\] /.+/github.com/morikuni/failure/callstack_test.go:11
-\[failure_test.TestCallStack_Format\] /.+/github.com/morikuni/failure/callstack_test.go:31
+		`\[failure_test.X\] /.+/failure/callstack_test.go:11
+\[failure_test.TestCallStack_Format\] /.+/failure/callstack_test.go:31
 \[.*`,
 	)
 }
@@ -55,19 +55,19 @@ func TestFrame_Format(t *testing.T) {
 
 	shouldMatch(t,
 		fmt.Sprintf("%v", f),
-		`/.+/github.com/morikuni/failure/callstack_test.go:11`,
+		`/.+/failure/callstack_test.go:11`,
 	)
 	shouldMatch(t,
 		fmt.Sprintf("%s", f),
-		`/.+/github.com/morikuni/failure/callstack_test.go:11`,
+		`/.+/failure/callstack_test.go:11`,
 	)
 	shouldMatch(t,
 		fmt.Sprintf("%#v", f),
-		`/.+/github.com/morikuni/failure/callstack_test.go:11`,
+		`/.+/failure/callstack_test.go:11`,
 	)
 	shouldMatch(t,
 		fmt.Sprintf("%+v", f),
-		`\[failure_test.X\] /.+/github.com/morikuni/failure/callstack_test.go:11`,
+		`\[failure_test.X\] /.+/failure/callstack_test.go:11`,
 	)
 }
 
@@ -96,6 +96,6 @@ func TestFrame(t *testing.T) {
 	shouldEqual(t, f.Func(), "X")
 	shouldEqual(t, f.Line(), 11)
 	shouldEqual(t, f.File(), "callstack_test.go")
-	shouldContain(t, f.Path(), "github.com/morikuni/failure/callstack_test.go")
+	shouldContain(t, f.Path(), "/failure/callstack_test.go")
 	shouldEqual(t, f.Pkg(), "failure_test")
 }

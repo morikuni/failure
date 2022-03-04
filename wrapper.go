@@ -13,7 +13,6 @@ var _ = []interface{ Unwrap() error }{
 	(*withCallStack)(nil),
 	(*formatter)(nil),
 	(*withCode)(nil),
-	(*withoutCode)(nil),
 	(*withUnexpected)(nil),
 }
 
