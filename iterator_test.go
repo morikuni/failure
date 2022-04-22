@@ -12,7 +12,7 @@ type a struct {
 	error
 }
 
-func (a a) UnwrapError() error {
+func (a a) Unwrap() error {
 	return a.error
 }
 
@@ -29,7 +29,7 @@ type c struct {
 	error
 }
 
-func (c c) UnwrapError() error {
+func (c c) Unwrap() error {
 	return c.error
 }
 

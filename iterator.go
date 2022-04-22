@@ -28,11 +28,15 @@ func (i *Iterator) unwrapError() error {
 	type go113error interface {
 		Unwrap() error
 	}
+	// For backward compatibility with v0 failure.
+	type oldFailureError interface {
+		UnwrapError() error
+	}
 
 	switch t := i.err.(type) {
 	case go113error:
 		return t.Unwrap()
-	case Unwrapper:
+	case oldFailureError:
 		return t.UnwrapError()
 	case causer:
 		return t.Cause()
@@ -60,7 +64,7 @@ type guardianUnwapper struct {
 	error
 }
 
-func (w guardianUnwapper) UnwrapError() error {
+func (w guardianUnwapper) Unwrap() error {
 	return w.error
 }
 
