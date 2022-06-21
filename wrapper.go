@@ -17,8 +17,6 @@ var _ = []interface{ Unwrap() error }{
 }
 
 // Wrapper interface is used by constructor functions.
-// Note: The method of this interface will be replaced by Wrap(error) error
-// in v1.0.0 release to be consistent in errors' Unwrap interface.
 type Wrapper interface {
 	// WrapError should wrap given err to append some
 	// capability to the error.
