@@ -68,6 +68,11 @@ func (w *withMessage) Unwrap() error {
 	return w.underlying
 }
 
+// Deprecated: This function will be deleted in v1.0.0 release. Please use As method on Iterator.
+func (w *withMessage) GetMessage() string {
+	return w.message.String()
+}
+
 func (w *withMessage) As(x interface{}) bool {
 	switch t := x.(type) {
 	case *Message:
@@ -138,6 +143,11 @@ func (w *withContext) Unwrap() error {
 	return w.underlying
 }
 
+// Deprecated: This function will be deleted in v1.0.0 release. Please use As method on Iterator.
+func (w *withContext) GetContext() Context {
+	return w.ctx
+}
+
 func (w *withContext) As(x interface{}) bool {
 	switch t := x.(type) {
 	case *Context:
@@ -174,6 +184,11 @@ func (w *withCallStack) Error() string {
 
 func (w *withCallStack) Unwrap() error {
 	return w.underlying
+}
+
+// Deprecated: This function will be deleted in v1.0.0 release. Please use As method on Iterator.
+func (w *withCallStack) GetCallStack() CallStack {
+	return w.callStack
 }
 
 func (w *withCallStack) As(x interface{}) bool {
