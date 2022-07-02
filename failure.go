@@ -113,6 +113,11 @@ func (w *withCode) Unwrap() error {
 	return w.underlying
 }
 
+// Deprecated: This function will be deleted in v1.0.0 release. Please use As method on Iterator.
+func (w *withCode) GetCode() Code {
+	return w.code
+}
+
 func (w *withCode) As(x interface{}) bool {
 	switch t := x.(type) {
 	case *Code:
