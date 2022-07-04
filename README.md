@@ -1,9 +1,9 @@
 # failure
 
-[![CircleCI](https://circleci.com/gh/morikuni/failure/tree/master.svg?style=shield)](https://circleci.com/gh/morikuni/failure/tree/master)
+[![CircleCI](https://circleci.com/gh/morikuni/failure/tree/main.svg?style=shield)](https://circleci.com/gh/morikuni/failure/tree/master)
 [![Go Reference](https://pkg.go.dev/badge/github.com/morikuni/failure.svg)](https://pkg.go.dev/github.com/morikuni/failure)
 [![Go Report Card](https://goreportcard.com/badge/github.com/morikuni/failure)](https://goreportcard.com/report/github.com/morikuni/failure)
-[![codecov](https://codecov.io/gh/morikuni/failure/branch/master/graph/badge.svg)](https://codecov.io/gh/morikuni/failure)
+[![codecov](https://codecov.io/gh/morikuni/failure/branch/main/graph/badge.svg)](https://codecov.io/gh/morikuni/failure)
 
 Package `failure` provides errors utilities for your application errors.
 
