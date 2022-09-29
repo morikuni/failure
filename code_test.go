@@ -2,9 +2,8 @@ package failure_test
 
 import (
 	"errors"
-	"testing"
-
 	"io"
+	"testing"
 
 	"github.com/morikuni/failure"
 )
@@ -61,4 +60,21 @@ func TestIs(t *testing.T) {
 
 	shouldEqual(t, failure.Is(nil, nil), true)
 	shouldEqual(t, failure.Is(errors.New("error"), nil), true)
+}
+
+func TestErrorsAs(t *testing.T) {
+	const (
+		A failure.StringCode = "A"
+	)
+	err := failure.New(A, failure.Message("foo"))
+	var cs failure.CallStack
+	wantCS, _ := failure.CallStackOf(err)
+	shouldEqual(t, errors.As(err, &cs), true)
+	shouldEqual(t, cs, wantCS)
+	var code failure.Code
+	shouldEqual(t, errors.As(err, &code), true)
+	shouldEqual(t, code, A)
+	var msg failure.Messenger
+	shouldEqual(t, errors.As(err, &msg), true)
+	shouldEqual(t, msg, failure.Message("foo"))
 }

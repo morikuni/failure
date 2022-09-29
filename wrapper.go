@@ -2,6 +2,7 @@ package failure
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"io"
 	"sort"
@@ -37,6 +38,10 @@ func (f WrapperFunc) WrapError(err error) error {
 	return f(err)
 }
 
+type Messenger interface {
+	Message() string
+}
+
 // Message is a wrapper which appends message to an error.
 type Message string
 
@@ -48,6 +53,10 @@ func (m Message) String() string {
 // WrapError implements Wrapper interface.
 func (m Message) WrapError(err error) error {
 	return &withMessage{m, err}
+}
+
+func (m Message) Message() string {
+	return string(m)
 }
 
 // Messagef returns Message with formatting.
@@ -78,6 +87,9 @@ func (w *withMessage) As(x interface{}) bool {
 	case *Message:
 		*t = w.message
 		return true
+	case *Messenger:
+		*t = w.message
+		return true
 	case Tracer:
 		t.Push(w.message)
 		return true
@@ -91,14 +103,10 @@ func MessageOf(err error) (string, bool) {
 		return "", false
 	}
 
-	i := NewIterator(err)
-	for i.Next() {
-		var msg Message
-		if i.As(&msg) {
-			return msg.String(), true
-		}
+	var msg Messenger
+	if errors.As(err, &msg) {
+		return msg.Message(), true
 	}
-
 	return "", false
 }
 
@@ -224,9 +232,9 @@ func CallStackOf(err error) (CallStack, bool) {
 
 // WithFormatter appends an error formatter to the err.
 //
-//     %v+: Print trace for each place, and deepest call stack.
-//     %#v: Print raw structure of the error.
-//     others (%s, %v): Same as err.Error().
+//	%v+: Print trace for each place, and deepest call stack.
+//	%#v: Print raw structure of the error.
+//	others (%s, %v): Same as err.Error().
 //
 // You don't have to use this directly, unless using function Custom.
 func WithFormatter() Wrapper {
