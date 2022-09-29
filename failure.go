@@ -81,8 +81,8 @@ func (e unexpected) Unexpected() bool {
 
 func (e unexpected) As(x interface{}) bool {
 	switch t := x.(type) {
-	case Tracer:
-		t.Push(e)
+	case *Tracer:
+		(*t).Push(e)
 		return true
 	default:
 		return false
@@ -123,8 +123,8 @@ func (w *withCode) As(x interface{}) bool {
 	case *Code:
 		*t = w.code
 		return true
-	case Tracer:
-		t.Push(w.code)
+	case *Tracer:
+		(*t).Push(w.code)
 		return true
 	default:
 		return false
