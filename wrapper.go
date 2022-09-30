@@ -38,6 +38,7 @@ func (f WrapperFunc) WrapError(err error) error {
 	return f(err)
 }
 
+// Messenger is an interface to be used with errors.As.
 type Messenger interface {
 	Message() string
 }
@@ -110,6 +111,11 @@ func MessageOf(err error) (string, bool) {
 	return "", false
 }
 
+// Contexter is an interface to be used with errors.As.
+type Contexter interface {
+	Context() Context
+}
+
 // Context is a key-value data which describes the how the error occurred
 // for debugging purpose. You must not use context data as a part of your
 // application logic. Just print it.
@@ -117,6 +123,10 @@ func MessageOf(err error) (string, bool) {
 // define an interface with method `GetContext() Context` and use it with
 // iterator, like other extraction functions (see: MessageOf).
 type Context map[string]string
+
+func (c Context) Context() Context {
+	return c
+}
 
 // WrapError implements the Wrapper interface.
 func (c Context) WrapError(err error) error {
@@ -158,6 +168,9 @@ func (w *withContext) GetContext() Context {
 
 func (w *withContext) As(x interface{}) bool {
 	switch t := x.(type) {
+	case *Contexter:
+		*t = w.ctx
+		return true
 	case *Context:
 		*t = w.ctx
 		return true
@@ -285,15 +298,15 @@ func (f *formatter) Format(s fmt.State, verb rune) {
 		}
 		var (
 			cs   CallStack
-			ctx  Context
-			msg  Message
+			ctx  Contexter
+			msg  Messenger
 			code Code
 		)
 		switch {
 		case i.As(&cs):
 			fmt.Fprintf(s, "%+v\n", cs.HeadFrame())
 		case i.As(&ctx):
-			for k, v := range ctx {
+			for k, v := range ctx.Context() {
 				fmt.Fprintf(s, "    %s = %s\n", k, v)
 			}
 		case i.As(&msg):
