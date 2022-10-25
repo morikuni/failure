@@ -144,7 +144,11 @@ func (f frame) Func() string {
 }
 
 func (f frame) PkgPath() string {
-	return f.function[:strings.LastIndex(f.function, ".")]
+	// e.g.
+	//   When f.function = github.com/morikuni/failure_test.TestFrame.func1.1
+	//   f.PkgPath() = github.com/morikuni/failure_test
+	lastSlash := strings.LastIndex(f.function, "/")
+	return f.function[:strings.Index(f.function[lastSlash:], ".")+lastSlash]
 }
 
 func (f frame) PC() uintptr {
