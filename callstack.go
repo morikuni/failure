@@ -108,6 +108,8 @@ type Frame interface {
 	Func() string
 	// Pkg returns a package name of the function.
 	Pkg() string
+	// PkgPath returns a path-qualified package name of the function.
+	PkgPath() string
 	// PC returns a program counter of this frame.
 	PC() uintptr
 }
@@ -139,6 +141,10 @@ func (f frame) Func() string {
 		return strings.Join(fs[1:], ".")
 	}
 	return fs[0]
+}
+
+func (f frame) PkgPath() string {
+	return f.function[:strings.LastIndex(f.function, ".")]
 }
 
 func (f frame) PC() uintptr {
