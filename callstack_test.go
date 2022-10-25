@@ -93,10 +93,14 @@ func TestCallStack_HeadFrame(t *testing.T) {
 }
 
 func TestFrame(t *testing.T) {
-	f := X().HeadFrame()
+	f := func() failure.Frame {
+		return func() failure.Frame {
+			return failure.Callers(0).HeadFrame()
+		}()
+	}()
 
-	shouldEqual(t, f.Func(), "X")
-	shouldEqual(t, f.Line(), 11)
+	shouldEqual(t, f.Func(), "TestFrame.func1.1")
+	shouldEqual(t, f.Line(), 98)
 	shouldEqual(t, f.File(), "callstack_test.go")
 	shouldContain(t, f.Path(), "/failure/callstack_test.go")
 	shouldEqual(t, f.Pkg(), "failure_test")
