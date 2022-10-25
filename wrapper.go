@@ -2,6 +2,7 @@ package failure
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"io"
 	"sort"
@@ -37,6 +38,11 @@ func (f WrapperFunc) WrapError(err error) error {
 	return f(err)
 }
 
+// Messenger is an interface to be used with errors.As.
+type Messenger interface {
+	Message() string
+}
+
 // Message is a wrapper which appends message to an error.
 type Message string
 
@@ -48,6 +54,10 @@ func (m Message) String() string {
 // WrapError implements Wrapper interface.
 func (m Message) WrapError(err error) error {
 	return &withMessage{m, err}
+}
+
+func (m Message) Message() string {
+	return string(m)
 }
 
 // Messagef returns Message with formatting.
@@ -78,8 +88,11 @@ func (w *withMessage) As(x interface{}) bool {
 	case *Message:
 		*t = w.message
 		return true
-	case Tracer:
-		t.Push(w.message)
+	case *Messenger:
+		*t = w.message
+		return true
+	case *Tracer:
+		(*t).Push(w.message)
 		return true
 	}
 	return false
@@ -91,15 +104,16 @@ func MessageOf(err error) (string, bool) {
 		return "", false
 	}
 
-	i := NewIterator(err)
-	for i.Next() {
-		var msg Message
-		if i.As(&msg) {
-			return msg.String(), true
-		}
+	var msg Messenger
+	if errors.As(err, &msg) {
+		return msg.Message(), true
 	}
-
 	return "", false
+}
+
+// Contexter is an interface to be used with errors.As.
+type Contexter interface {
+	Context() Context
 }
 
 // Context is a key-value data which describes the how the error occurred
@@ -109,6 +123,10 @@ func MessageOf(err error) (string, bool) {
 // define an interface with method `GetContext() Context` and use it with
 // iterator, like other extraction functions (see: MessageOf).
 type Context map[string]string
+
+func (c Context) Context() Context {
+	return c
+}
 
 // WrapError implements the Wrapper interface.
 func (c Context) WrapError(err error) error {
@@ -150,11 +168,14 @@ func (w *withContext) GetContext() Context {
 
 func (w *withContext) As(x interface{}) bool {
 	switch t := x.(type) {
+	case *Contexter:
+		*t = w.ctx
+		return true
 	case *Context:
 		*t = w.ctx
 		return true
-	case Tracer:
-		t.Push(w.ctx)
+	case *Tracer:
+		(*t).Push(w.ctx)
 		return true
 	}
 	return false
@@ -196,8 +217,8 @@ func (w *withCallStack) As(x interface{}) bool {
 	case *CallStack:
 		*t = w.callStack
 		return true
-	case Tracer:
-		t.Push(w.callStack)
+	case *Tracer:
+		(*t).Push(w.callStack)
 		return true
 	}
 	return false
@@ -224,9 +245,9 @@ func CallStackOf(err error) (CallStack, bool) {
 
 // WithFormatter appends an error formatter to the err.
 //
-//     %v+: Print trace for each place, and deepest call stack.
-//     %#v: Print raw structure of the error.
-//     others (%s, %v): Same as err.Error().
+//	%v+: Print trace for each place, and deepest call stack.
+//	%#v: Print raw structure of the error.
+//	others (%s, %v): Same as err.Error().
 //
 // You don't have to use this directly, unless using function Custom.
 func WithFormatter() Wrapper {
@@ -277,15 +298,15 @@ func (f *formatter) Format(s fmt.State, verb rune) {
 		}
 		var (
 			cs   CallStack
-			ctx  Context
-			msg  Message
+			ctx  Contexter
+			msg  Messenger
 			code Code
 		)
 		switch {
 		case i.As(&cs):
 			fmt.Fprintf(s, "%+v\n", cs.HeadFrame())
 		case i.As(&ctx):
-			for k, v := range ctx {
+			for k, v := range ctx.Context() {
 				fmt.Fprintf(s, "    %s = %s\n", k, v)
 			}
 		case i.As(&msg):
@@ -332,8 +353,8 @@ func (*withUnexpected) Unexpected() bool {
 
 func (*withUnexpected) As(x interface{}) bool {
 	switch t := x.(type) {
-	case Tracer:
-		t.Push(unexpected("mark unexpected"))
+	case *Tracer:
+		(*t).Push(unexpected("mark unexpected"))
 		return true
 	default:
 		return false

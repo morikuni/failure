@@ -2,9 +2,8 @@ package failure_test
 
 import (
 	"errors"
-	"testing"
-
 	"io"
+	"testing"
 
 	"github.com/morikuni/failure"
 )

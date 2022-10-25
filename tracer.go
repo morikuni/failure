@@ -13,7 +13,7 @@ func Trace(err error, vs Tracer) {
 
 	i := NewIterator(err)
 	for i.Next() {
-		i.As(vs)
+		i.As(&vs)
 	}
 }
 
