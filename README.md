@@ -100,10 +100,6 @@ With `%+v` format, it prints the detailed error chain + the call stack of the fi
 ## Full Example for HTTP Server
 
 Try it on [The Go Playground](https://play.golang.org/p/Pmgm7-7J1_c)!
-
-Or click `▶` on the below to see the code.
-
-<details>
 	
 ```go
 package main
