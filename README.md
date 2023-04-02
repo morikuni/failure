@@ -225,5 +225,3 @@ func main() {
 	fmt.Println(string(res))
 }
 ```
-
-</details>
