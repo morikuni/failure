@@ -8,6 +8,19 @@ import (
 	"strings"
 )
 
+// NewCallStack returns call stack from program counters.
+// You can use Callers for usual usage.
+func NewCallStack(pcs []uintptr) CallStack {
+	return CallStack{pcs}
+}
+
+// Callers returns a call stack for the current state.
+func Callers(skip int) CallStack {
+	var pcs [32]uintptr
+	n := runtime.Callers(skip+2, pcs[:])
+	return NewCallStack(pcs[:n])
+}
+
 type CallStack struct {
 	pcs []uintptr
 }
@@ -70,19 +83,6 @@ func (cs CallStack) Format(s fmt.State, verb rune) {
 	case 's':
 		fmt.Fprintf(s, "%v", cs)
 	}
-}
-
-// NewCallStack returns call stack from program counters.
-// You can use Callers for usual usage.
-func NewCallStack(pcs []uintptr) CallStack {
-	return CallStack{pcs}
-}
-
-// Callers returns a call stack for the current state.
-func Callers(skip int) CallStack {
-	var pcs [32]uintptr
-	n := runtime.Callers(skip+2, pcs[:])
-	return NewCallStack(pcs[:n])
 }
 
 var emptyFrame = Frame{"???", 0, "???", uintptr(0)}
