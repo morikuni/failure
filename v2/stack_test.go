@@ -47,3 +47,11 @@ func TestStack_As(t *testing.T) {
 	equal(t, st.As(&err), false)
 	equal(t, err, nil)
 }
+
+func TestStack_Value(t *testing.T) {
+	st := failure.NewStack(nil, []failure.Field{failure.Message("aaa"), failure.Context{"a": "b"}})
+
+	equal(t, st.Value(failure.KeyMessage), failure.Messagef("aaa"))
+	equal(t, st.Value(failure.KeyContext), failure.Context{"a": "b"})
+	equal(t, st.Value(failure.KeyCode), nil)
+}

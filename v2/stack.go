@@ -136,3 +136,7 @@ func (s Stack) As(target any) bool {
 	}
 	return false
 }
+
+func (s Stack) Value(key any) any {
+	return s.fields[key]
+}
