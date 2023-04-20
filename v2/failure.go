@@ -1,5 +1,9 @@
 package failure
 
+import (
+	"io"
+)
+
 type Code comparable
 
 type Field interface {
@@ -11,7 +15,7 @@ type FieldSetter interface {
 }
 
 type ErrorFormatter interface {
-	FormatError() string
+	FormatError(io.Writer)
 }
 
 func New[C Code](c C, fields ...Field) error {

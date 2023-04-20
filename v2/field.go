@@ -2,7 +2,7 @@ package failure
 
 import (
 	"fmt"
-	"strings"
+	"io"
 )
 
 type internalKey int
@@ -32,20 +32,18 @@ func (c Context) SetErrorField(setter FieldSetter) {
 	setter.Set(KeyContext, c)
 }
 
-func (c Context) FormatError() string {
-	var b strings.Builder
+func (c Context) FormatError(w io.Writer) {
 	first := true
-	b.WriteRune('{')
+	io.WriteString(w, "{")
 	for k, v := range c {
 		if !first {
 			first = false
-			b.WriteString(",")
+			io.WriteString(w, ",")
 		}
 		first = false
-		fmt.Fprintf(&b, "%s=%s", k, v)
+		fmt.Fprintf(w, "%s=%s", k, v)
 	}
-	b.WriteRune('}')
-	return b.String()
+	io.WriteString(w, "}")
 }
 
 type Message string

@@ -93,7 +93,7 @@ func (s Stack) Error() string {
 			}
 			first = false
 			if ef, ok := v.(ErrorFormatter); ok {
-				b.WriteString(ef.FormatError())
+				ef.FormatError(&b)
 			} else {
 				fmt.Fprint(&b, v)
 			}
