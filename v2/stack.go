@@ -9,60 +9,92 @@ import (
 type Code comparable
 
 type Field interface {
-	// ErrorFieldKey returns the value for identifying the Field type.
-	// The returned value must be comparable and should not be built-in types to avoid collisions.
-	ErrorFieldKey() any
+	SetErrorField(setter FieldSetter)
+}
+
+type FieldSetter interface {
+	Set(key, value any)
+}
+
+type ErrorFormatter interface {
+	FormatError() string
 }
 
 func New[C Code](c C, fields ...Field) error {
-	s := Stack{
-		code: c,
-	}
-	s.applyFields(fields)
-	return s
+	return newStack(nil, c, fields)
 }
 
 func Translate[C Code](err error, c C, fields ...Field) error {
-	s := Stack{
-		code:       c,
-		underlying: err,
-	}
-	s.applyFields(fields)
-	return s
+	return newStack(err, c, fields)
 }
 
 func Wrap(err error, fields ...Field) error {
-	s := Stack{
-		underlying: err,
+	if err == nil {
+		return nil
 	}
-	s.applyFields(fields)
-	return s
+	return newStack(err, nil, fields)
+}
+
+func newStack(err error, code any, fields []Field) error {
+	var defaultFields []Field
+	if code == nil {
+		defaultFields = []Field{
+			Callers(2),
+		}
+	} else {
+		defaultFields = []Field{
+			codeField{code},
+			Callers(2),
+		}
+	}
+	return NewStack(err, defaultFields, fields)
+}
+
+func NewStack(underlying error, fieldsSet ...[]Field) error {
+	fieldCount := 0
+	for _, fields := range fieldsSet {
+		fieldCount += len(fields)
+	}
+
+	if underlying == nil && fieldCount == 0 {
+		return nil
+	}
+
+	s := Stack{
+		underlying: underlying,
+	}
+
+	if fieldCount == 0 {
+		return s
+	}
+
+	s.order = make([]any, 0, fieldCount)
+	s.fields = make(map[any]any, fieldCount)
+
+	setter := asSetter(s)
+	for _, fields := range fieldsSet {
+		for _, f := range fields {
+			f.SetErrorField(&setter)
+		}
+	}
+
+	return Stack(setter)
 }
 
 type Stack struct {
-	// Using generics here would make it difficult because it requires resolving the type
-	// before comparing the error code values, forcing us to use Stack[C].
-	code       any
 	underlying error
 	fields     map[any]any
 	order      []any
 }
 
-func (s *Stack) applyFields(fields []Field) {
-	if len(fields) == 0 {
-		return
-	}
+type asSetter Stack
 
-	s.order = make([]any, len(fields))
-	s.fields = make(map[any]any, len(fields))
-	for i, f := range fields {
-		key := f.ErrorFieldKey()
-		if _, exists := s.fields[key]; exists {
-			panic(fmt.Errorf("duplicate error field key: %T(%v)", key, key))
-		}
-		s.order[i] = key
-		s.fields[key] = f
+func (s *asSetter) Set(key, value any) {
+	if _, exists := s.fields[key]; exists {
+		panic(fmt.Errorf("duplicate error field key: %T(%v)", key, key))
 	}
+	s.order = append(s.order, key)
+	s.fields[key] = value
 }
 
 func (s Stack) Unwrap() error {
@@ -73,13 +105,6 @@ func (s Stack) Unwrap() error {
 }
 
 func (s Stack) Error() string {
-	if s.underlying == nil {
-		return s.string()
-	}
-	return fmt.Sprintf("%s: %s", s.string(), s.underlying)
-}
-
-func (s Stack) string() string {
 	var b strings.Builder
 
 	fieldsCount := len(s.fields)
@@ -91,39 +116,37 @@ func (s Stack) string() string {
 		b.WriteString(head.Func())
 	}
 
-	if s.code != nil {
-		b.WriteRune('(')
-		_, err := fmt.Fprint(&b, s.code)
-		if err != nil {
-			panic(fmt.Errorf("%s: %T", err, s.code))
-		}
+	if v, ok := s.fields[KeyCode]; ok {
+		fieldsCount--
+		b.WriteString("(code=")
+		fmt.Fprint(&b, v)
 		b.WriteRune(')')
 	}
 
 	if fieldsCount > 0 {
 		first := true
 		b.WriteRune('[')
-		for k, v := range s.fields {
-			if k == KeyCallStack {
+		for _, k := range s.order {
+			v := s.fields[k]
+			switch k {
+			case KeyCode, KeyCallStack:
 				continue
 			}
 			if !first {
 				b.WriteString(", ")
 			}
 			first = false
-			_, err := fmt.Fprint(&b, v)
-			if err != nil {
-				panic(fmt.Errorf("%s: %T", err, v))
+			if ef, ok := v.(ErrorFormatter); ok {
+				b.WriteString(ef.FormatError())
+			} else {
+				fmt.Fprint(&b, v)
 			}
 		}
 		b.WriteRune(']')
 	}
 
 	if s.underlying != nil {
-		_, err := fmt.Fprintf(&b, ": %v", s.underlying)
-		if err != nil {
-			panic(fmt.Errorf("%s: %T", err, s.underlying))
-		}
+		fmt.Fprintf(&b, ": %s", s.underlying.Error())
 	}
 
 	return b.String()

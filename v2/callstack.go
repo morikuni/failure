@@ -12,8 +12,8 @@ type CallStack struct {
 	pcs []uintptr
 }
 
-func (cs CallStack) ErrorFieldKey() any {
-	return KeyCallStack
+func (cs CallStack) SetErrorField(setter FieldSetter) {
+	setter.Set(KeyCallStack, cs)
 }
 
 func (cs CallStack) HeadFrame() Frame {
