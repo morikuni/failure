@@ -156,13 +156,20 @@ func (s Stack) As(target any) bool {
 	targetType := reflect.TypeOf(target)
 	for _, f := range s.fields {
 		fType := reflect.TypeOf(f)
-		if targetType.Kind() == reflect.Ptr && fType == targetType.Elem() {
-			targetVal := reflect.ValueOf(target)
-			if targetVal.IsNil() {
-				panic("failure: target cannot be nil")
+		if targetType.Kind() == reflect.Ptr {
+			targetElemType := targetType.Elem()
+			// Set the value if:
+			// 1. target is the same type.
+			// 2. target is interface and field is assignable it.
+			// Check whether assignable only if target is interface, to prevent unexpected assigning like failure.Context to map[string]string.
+			if fType == targetElemType || (targetElemType.Kind() == reflect.Interface && fType.AssignableTo(targetElemType)) {
+				targetVal := reflect.ValueOf(target)
+				if targetVal.IsNil() {
+					panic("failure: target cannot be nil")
+				}
+				targetVal.Elem().Set(reflect.ValueOf(f))
+				return true
 			}
-			targetVal.Elem().Set(reflect.ValueOf(f))
-			return true
 		}
 
 		if as, ok := f.(interface{ As(any) bool }); ok {
