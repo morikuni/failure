@@ -14,6 +14,10 @@ const (
 	KeyCallStack
 )
 
+func WithCode[C Code](c C) Field {
+	return codeField{c}
+}
+
 type codeField struct {
 	code any
 }
