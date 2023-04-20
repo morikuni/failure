@@ -50,14 +50,14 @@ func newStack(err error, code any, fields []Field) error {
 	return NewStack(err, defaultFields, fields)
 }
 
-func NewStack(underlying error, fieldsSet ...[]Field) error {
+func NewStack(underlying error, fieldsSet ...[]Field) Stack {
 	fieldCount := 0
 	for _, fields := range fieldsSet {
 		fieldCount += len(fields)
 	}
 
 	if underlying == nil && fieldCount == 0 {
-		return nil
+		panic("failure: invalid stack")
 	}
 
 	s := Stack{
@@ -153,15 +153,10 @@ func (s Stack) Error() string {
 }
 
 func (s Stack) As(target any) bool {
-	if t, ok := target.(*Stack); ok {
-		*t = s
-		return true
-	}
-
 	targetType := reflect.TypeOf(target)
 	for _, f := range s.fields {
 		fType := reflect.TypeOf(f)
-		if targetType.Kind() == reflect.Ptr || fType.AssignableTo(targetType.Elem()) {
+		if targetType.Kind() == reflect.Ptr && fType == targetType.Elem() {
 			targetVal := reflect.ValueOf(target)
 			if targetVal.IsNil() {
 				panic("failure: target cannot be nil")
