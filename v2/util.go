@@ -37,7 +37,7 @@ func ValueAs[V any, K comparable](err error, key K) (zero V, _ bool) {
 	}
 	t, ok := v.(V)
 	if !ok {
-		panic(fmt.Sprintf("failure: value for key=%T(%v) is not type=%T", key, key, zero))
+		panic(fmt.Sprintf("failure: value for key=%T(%v) is not type=%T but type=%T", key, key, zero, t))
 	}
 	return t, true
 }
@@ -71,7 +71,7 @@ func OriginValueAs[V any, K comparable](err error, key K) (zero V, _ bool) {
 	}
 	t, ok := v.(V)
 	if !ok {
-		panic(fmt.Sprintf("failure: value for key=%T(%v) is not type=%T", key, key, zero))
+		panic(fmt.Sprintf("failure: value for key=%T(%v) is not type=%T but type=%T", key, key, zero, t))
 	}
 	return t, true
 }
