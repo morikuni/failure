@@ -84,3 +84,14 @@ func CallStackOf(err error) CallStack {
 	return v
 }
 
+func PopStack(err error) (_ *Stack, tail error) {
+	for {
+		if err == nil {
+			return nil, nil
+		}
+		if st, ok := err.(*Stack); ok {
+			return st, st.Unwrap()
+		}
+		err = errors.Unwrap(err)
+	}
+}
