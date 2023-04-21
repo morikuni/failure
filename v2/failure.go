@@ -38,6 +38,13 @@ func Translate[C Code](err error, c C, fields ...Field) error {
 	return newStack(err, c, fields)
 }
 
+// Convert takes an existing error and returns a new error with the provided
+// error code. Use this function to replace the existing error with a new one.
+// This function is similar to Translate, but doesn't unwrap the original error.
+func Convert[C Code](err error, c C, fields ...Field) error {
+	return newStack(opaque{err}, c, fields)
+}
+
 // Wrap takes an existing and returns a new error. Use this function to add
 // context to an existing error without changing its error code.
 func Wrap(err error, fields ...Field) error {
