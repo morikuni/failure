@@ -51,7 +51,7 @@ type Stack interface {
 	error
 	Unwrap() error
 	Value(key any) any
-	As(key any) bool
+	As(target any) bool
 }
 
 var _ Stack = (*stack)(nil)
