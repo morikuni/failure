@@ -6,17 +6,17 @@ import (
 	"strings"
 )
 
-func NewStack(underlying error, fieldsSet ...[]Field) Stack {
+func NewStack(underlying error, fieldsSet ...[]Field) *Stack {
 	fieldCount := 0
 	for _, fields := range fieldsSet {
 		fieldCount += len(fields)
 	}
 
 	if underlying == nil && fieldCount == 0 {
-		panic("failure: invalid stack")
+		panic("failure: invalid Stack")
 	}
 
-	s := Stack{
+	s := &Stack{
 		underlying: underlying,
 	}
 
@@ -27,14 +27,15 @@ func NewStack(underlying error, fieldsSet ...[]Field) Stack {
 	s.order = make([]any, 0, fieldCount)
 	s.fields = make(map[any]any, fieldCount)
 
-	setter := asSetter(s)
+	setter := asSetter(*s)
 	for _, fields := range fieldsSet {
 		for _, f := range fields {
 			f.SetErrorField(&setter)
 		}
 	}
 
-	return Stack(setter)
+	st := Stack(setter)
+	return &st
 }
 
 type Stack struct {
@@ -53,14 +54,14 @@ func (s *asSetter) Set(key, value any) {
 	s.fields[key] = value
 }
 
-func (s Stack) Unwrap() error {
+func (s *Stack) Unwrap() error {
 	if s.underlying == nil {
 		return nil
 	}
 	return s.underlying
 }
 
-func (s Stack) Error() string {
+func (s *Stack) Error() string {
 	var b strings.Builder
 
 	fieldsCount := len(s.fields)
@@ -108,7 +109,7 @@ func (s Stack) Error() string {
 	return b.String()
 }
 
-func (s Stack) As(target any) bool {
+func (s *Stack) As(target any) bool {
 	targetType := reflect.TypeOf(target)
 	for _, f := range s.fields {
 		fType := reflect.TypeOf(f)
@@ -137,6 +138,6 @@ func (s Stack) As(target any) bool {
 	return false
 }
 
-func (s Stack) Value(key any) any {
+func (s *Stack) Value(key any) any {
 	return s.fields[key]
 }
