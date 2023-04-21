@@ -6,6 +6,9 @@ import (
 	"strings"
 )
 
+// NewStack creates a new Stack from an underlying error and a variadic set of
+// Field slices. It returns a Stack with the specified fields and the underlying
+// error. Panics if both the underlying error and fields are empty.
 func NewStack(underlying error, fieldsSet ...[]Field) Stack {
 	fieldCount := 0
 	for _, fields := range fieldsSet {
@@ -38,6 +41,12 @@ func NewStack(underlying error, fieldsSet ...[]Field) Stack {
 	return &st
 }
 
+// Stack represents a stack of errors accumulated through wrapping, along with
+// additional information. Similar to CallStack represents the program's call
+// history, Stack represents the error handling history. By storing key-value
+// data, Stack extends errors with arbitrary information. Stack is also designed
+// to allow embedding within custom structs, enabling the implementation of
+// additional interfaces, such as gRPC Error (GRPCStatus method).
 type Stack interface {
 	error
 	Unwrap() error
@@ -45,8 +54,6 @@ type Stack interface {
 	As(key any) bool
 }
 
-// Stack is designed as interface to allow embedding within a custom struct,
-// which can then be used to implement additional interfaces, such as gRPC Error (GRPCStatus method).
 var _ Stack = (*stack)(nil)
 
 type stack struct {

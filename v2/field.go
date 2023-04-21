@@ -14,6 +14,9 @@ const (
 	KeyCallStack
 )
 
+// WithCode creates a new Field with the provided code.
+// Generally, you don't need to use this function directly unless you're using NewStack,
+// as Code will be automatically assigned when using New.
 func WithCode[C Code](c C) Field {
 	return codeField{c}
 }
@@ -26,12 +29,15 @@ func (c codeField) SetErrorField(setter FieldSetter) {
 	setter.Set(KeyCode, c.code)
 }
 
+// Context can be used to store additional information related to an error.
 type Context map[string]string
 
+// SetErrorField implements the Field interface.
 func (c Context) SetErrorField(setter FieldSetter) {
 	setter.Set(KeyContext, c)
 }
 
+// FormatError implements the ErrorFormatter interface.
 func (c Context) FormatError(w io.Writer) {
 	first := true
 	io.WriteString(w, "{")
@@ -46,12 +52,15 @@ func (c Context) FormatError(w io.Writer) {
 	io.WriteString(w, "}")
 }
 
+// Message represents an error message displayed for human.
 type Message string
 
+// SetErrorField implements the Field interface.
 func (m Message) SetErrorField(setter FieldSetter) {
 	setter.Set(KeyMessage, m)
 }
 
+// Messagef creates a new Message with the provided format and arguments.
 func Messagef(format string, a ...any) Message {
 	return Message(fmt.Sprintf(format, a...))
 }
