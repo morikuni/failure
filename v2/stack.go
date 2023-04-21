@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-func NewStack(underlying error, fieldsSet ...[]Field) *Stack {
+func NewStack(underlying error, fieldsSet ...[]Field) Stack {
 	fieldCount := 0
 	for _, fields := range fieldsSet {
 		fieldCount += len(fields)
@@ -16,7 +16,7 @@ func NewStack(underlying error, fieldsSet ...[]Field) *Stack {
 		panic("failure: invalid Stack")
 	}
 
-	s := &Stack{
+	s := &stack{
 		underlying: underlying,
 	}
 
@@ -34,17 +34,28 @@ func NewStack(underlying error, fieldsSet ...[]Field) *Stack {
 		}
 	}
 
-	st := Stack(setter)
+	st := stack(setter)
 	return &st
 }
 
-type Stack struct {
+type Stack interface {
+	error
+	Unwrap() error
+	Value(key any) any
+	As(key any) bool
+}
+
+// Stack is designed as interface to allow embedding within a custom struct,
+// which can then be used to implement additional interfaces, such as gRPC Error (GRPCStatus method).
+var _ Stack = (*stack)(nil)
+
+type stack struct {
 	underlying error
 	fields     map[any]any
 	order      []any
 }
 
-type asSetter Stack
+type asSetter stack
 
 func (s *asSetter) Set(key, value any) {
 	if _, exists := s.fields[key]; exists {
@@ -54,14 +65,14 @@ func (s *asSetter) Set(key, value any) {
 	s.fields[key] = value
 }
 
-func (s *Stack) Unwrap() error {
+func (s *stack) Unwrap() error {
 	if s.underlying == nil {
 		return nil
 	}
 	return s.underlying
 }
 
-func (s *Stack) Error() string {
+func (s *stack) Error() string {
 	var b strings.Builder
 
 	fieldsCount := len(s.fields)
@@ -109,7 +120,7 @@ func (s *Stack) Error() string {
 	return b.String()
 }
 
-func (s *Stack) As(target any) bool {
+func (s *stack) As(target any) bool {
 	targetType := reflect.TypeOf(target)
 	for _, f := range s.fields {
 		fType := reflect.TypeOf(f)
@@ -138,6 +149,6 @@ func (s *Stack) As(target any) bool {
 	return false
 }
 
-func (s *Stack) Value(key any) any {
+func (s *stack) Value(key any) any {
 	return s.fields[key]
 }

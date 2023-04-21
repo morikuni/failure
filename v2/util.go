@@ -5,12 +5,16 @@ import (
 	"fmt"
 )
 
+type valuer interface {
+	Value(any) any
+}
+
 func Value[K comparable](err error, key K) any {
 	for {
 		if err == nil {
 			return nil
 		}
-		if valuer, ok := err.(interface{ Value(any) any }); ok {
+		if valuer, ok := err.(valuer); ok {
 			v := valuer.Value(key)
 			if v != nil {
 				return v
@@ -38,7 +42,7 @@ func OriginValue[K comparable](err error, key K) any {
 		if err == nil {
 			return origin
 		}
-		if valuer, ok := err.(interface{ Value(any) any }); ok {
+		if valuer, ok := err.(valuer); ok {
 			v := valuer.Value(key)
 			if v != nil {
 				origin = v
@@ -84,12 +88,12 @@ func CallStackOf(err error) CallStack {
 	return v
 }
 
-func PopStack(err error) (_ *Stack, tail error) {
+func PopStack(err error) (_ Stack, tail error) {
 	for {
 		if err == nil {
 			return nil, nil
 		}
-		if st, ok := err.(*Stack); ok {
+		if st, ok := err.(Stack); ok {
 			return st, st.Unwrap()
 		}
 		err = errors.Unwrap(err)
