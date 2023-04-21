@@ -11,7 +11,7 @@ import (
 // NewCallStack returns call stack from program counters.
 // You can use Callers for usual usage.
 func NewCallStack(pcs []uintptr) CallStack {
-	return CallStack{pcs}
+	return CallStack(pcs)
 }
 
 // Callers returns a call stack for the current state.
@@ -21,32 +21,30 @@ func Callers(skip int) CallStack {
 	return NewCallStack(pcs[:n])
 }
 
-type CallStack struct {
-	pcs []uintptr
-}
+type CallStack []uintptr
 
 func (cs CallStack) SetErrorField(setter FieldSetter) {
 	setter.Set(KeyCallStack, cs)
 }
 
 func (cs CallStack) HeadFrame() Frame {
-	if len(cs.pcs) == 0 {
+	if len(cs) == 0 {
 		return emptyFrame
 	}
 
-	rfs := runtime.CallersFrames(cs.pcs[:1])
+	rfs := runtime.CallersFrames(cs[:1])
 	f, _ := rfs.Next()
 	return Frame{f.File, f.Line, f.Function, f.PC}
 }
 
 func (cs CallStack) Frames() []Frame {
-	if len(cs.pcs) == 0 {
+	if len(cs) == 0 {
 		return nil
 	}
 
-	rfs := runtime.CallersFrames(cs.pcs)
+	rfs := runtime.CallersFrames(cs)
 
-	fs := make([]Frame, 0, len(cs.pcs))
+	fs := make([]Frame, 0, len(cs))
 	for {
 		f, more := rfs.Next()
 
