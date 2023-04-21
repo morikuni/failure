@@ -57,7 +57,7 @@ func OriginValue[K comparable](err error, key K) any {
 				origin = v
 			}
 		}
-		err = errors.Unwrap(err)
+		err = ForceUnwrap(err)
 	}
 }
 
@@ -117,4 +117,14 @@ func PopStack(err error) (_ Stack, tail error) {
 		}
 		err = errors.Unwrap(err)
 	}
+}
+
+// ForceUnwrap returns the result of calling the ForceUnwrap method on err, if
+// err implements ForceUnwrap method returning error. Otherwise,
+// ForceUnwrap returns the result of calling errors.Unwrap on err.
+func ForceUnwrap(err error) error {
+	if u, ok := err.(interface{ ForceUnwrap() error }); ok {
+		return u.ForceUnwrap()
+	}
+	return errors.Unwrap(err)
 }

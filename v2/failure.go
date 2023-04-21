@@ -47,11 +47,31 @@ func Wrap(err error, fields ...Field) error {
 	return newStack(err, nil, fields)
 }
 
-// Error creates an error with the provided text and optional fields. It is
-// recommended to use New with error codes whenever possible, and reserve the use
-// of Error for unexpected error occurrences.
+// Error creates an error with the provided text. It is recommended to use New
+// with error codes whenever possible, and reserve the use of Error for
+// a unexpected situation.
 func Error(text string, fields ...Field) error {
 	return newStack(errors.New(text), nil, fields)
+}
+
+// Opaque creates an error that cannot be unwrapped using the standard Unwrap
+// method. Use this function when you want to prevent propagating data like error
+// codes or context to the caller. However, using ForceUnwrap will still allow
+// retrieving the original error.
+func Opaque(err error, fields ...Field) error {
+	return newStack(opaque{err}, nil, fields)
+}
+
+type opaque struct {
+	error
+}
+
+func (opaque) Unwrap() error {
+	return nil
+}
+
+func (o opaque) ForceUnwrap() error {
+	return o.error
 }
 
 func newStack(err error, code any, fields []Field) error {
