@@ -37,7 +37,7 @@ func TestStack_As(t *testing.T) {
 
 	var cs failure.CallStack
 	equal(t, st.As(&cs), false)
-	equal(t, cs, failure.CallStack{})
+	equal(t, cs, failure.CallStack(nil))
 
 	var f failure.Field
 	equal(t, st.As(&f), true)

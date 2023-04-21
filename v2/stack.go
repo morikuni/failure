@@ -48,7 +48,7 @@ type asSetter Stack
 
 func (s *asSetter) Set(key, value any) {
 	if _, exists := s.fields[key]; exists {
-		panic(fmt.Errorf("duplicate error field key: %T(%v)", key, key))
+		panic(fmt.Sprintf("failure: duplicate error field key: %T(%v)", key, key))
 	}
 	s.order = append(s.order, key)
 	s.fields[key] = value
