@@ -69,6 +69,16 @@ func Opaque(err error, fields ...Field) error {
 	return newStack(opaque{err}, nil, fields)
 }
 
+// Unexpected is the alias of Error.
+func Unexpected(text string, fields ...Field) error {
+	return newStack(errors.New(text), nil, fields)
+}
+
+// MarkUnexpected is the alias of Opaque.
+func MarkUnexpected(err error, fields ...Field) error {
+	return newStack(opaque{err}, nil, fields)
+}
+
 type opaque struct {
 	error
 }
