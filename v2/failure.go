@@ -99,7 +99,7 @@ func newStack(err error, code any, fields []Field) error {
 		}
 	} else {
 		defaultFields = []Field{
-			codeField{code},
+			WithCode(code),
 			Callers(2),
 		}
 	}
