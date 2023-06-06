@@ -120,6 +120,21 @@ func PopStack(err error) (_ Stack, tail error) {
 	}
 }
 
+// ForcePopStack force unwraps the error, returning the first Stack found in the error chain
+// and the remaining tail of the error. This function is similar to PopStack, but it pops
+// Stack even if the error is opaqued.
+func ForcePopStack(err error) (_ Stack, tail error) {
+	for {
+		if err == nil {
+			return nil, nil
+		}
+		if st, ok := err.(Stack); ok {
+			return st, st.Unwrap()
+		}
+		err = ForceUnwrap(err)
+	}
+}
+
 // ForceUnwrap returns the result of calling the ForceUnwrap method on err, if
 // err implements ForceUnwrap method returning error. Otherwise,
 // ForceUnwrap returns the result of calling errors.Unwrap on err.
