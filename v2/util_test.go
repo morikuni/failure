@@ -19,15 +19,15 @@ func TestValue(t *testing.T) {
 	equal(t, failure.Value(err, failure.KeyCode), nil)
 }
 
-func TestOriginalValue(t *testing.T) {
+func TestCauseValue(t *testing.T) {
 	err := errors.New("error")
 	err = failure.NewStack(err, []failure.Field{failure.Message("1"), failure.Context{"a": "b"}})
 	err = fmt.Errorf("fmt: %w", err)
 	err = failure.NewStack(err, []failure.Field{failure.Callers(0), failure.Message("2")})
 
-	equal(t, failure.OriginalValue(err, failure.KeyMessage), failure.Message("1"))
-	equal(t, failure.OriginalValue(err, failure.KeyContext), failure.Context{"a": "b"})
-	equal(t, failure.OriginalValue(err, failure.KeyCode), nil)
+	equal(t, failure.CauseValue(err, failure.KeyMessage), failure.Message("1"))
+	equal(t, failure.CauseValue(err, failure.KeyContext), failure.Context{"a": "b"})
+	equal(t, failure.CauseValue(err, failure.KeyCode), nil)
 }
 
 func TestIs(t *testing.T) {

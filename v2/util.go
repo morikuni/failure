@@ -42,11 +42,11 @@ func ValueAs[V any, K comparable](err error, key K) (zero V, _ bool) {
 	return t, true
 }
 
-// OriginalValue retrieves the first value set for the specified key within the
+// CauseValue retrieves the first value set for the specified key within the
 // given error. It forcefully unwraps the error, tracking the earliest
 // encountered value with the given key until reaching the end of the error
 // chain.
-func OriginalValue[K comparable](err error, key K) any {
+func CauseValue[K comparable](err error, key K) any {
 	var origin any
 	for {
 		if err == nil {
@@ -62,11 +62,11 @@ func OriginalValue[K comparable](err error, key K) any {
 	}
 }
 
-// OriginalValueAs is similar to OriginalValue, but also asserts that the value has
+// CauseValueAs is similar to CauseValue, but also asserts that the value has
 // the specified type V. If the value is not of the expected type, it panics with
 // an error message.
-func OriginalValueAs[V any, K comparable](err error, key K) (zero V, _ bool) {
-	v := OriginalValue(err, key)
+func CauseValueAs[V any, K comparable](err error, key K) (zero V, _ bool) {
+	v := CauseValue(err, key)
 	if v == nil {
 		return zero, false
 	}
@@ -102,7 +102,7 @@ func MessageOf(err error) Message {
 
 // CallStackOf retrieves a CallStack associated with the given error.
 func CallStackOf(err error) CallStack {
-	v, _ := OriginalValueAs[CallStack](err, KeyCallStack)
+	v, _ := CauseValueAs[CallStack](err, KeyCallStack)
 	return v
 }
 
