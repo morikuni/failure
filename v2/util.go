@@ -42,7 +42,7 @@ func ValueAs[V any, K comparable](err error, key K) (zero V, _ bool) {
 	return t, true
 }
 
-// CauseValue retrieves the first value set for the specified key within the
+// CauseValue retrieves the cause value set for the specified key within the
 // given error. It forcefully unwraps the error, tracking the earliest
 // encountered value with the given key until reaching the end of the error
 // chain.
@@ -104,6 +104,18 @@ func MessageOf(err error) Message {
 func CallStackOf(err error) CallStack {
 	v, _ := CauseValueAs[CallStack](err, KeyCallStack)
 	return v
+}
+
+// CauseOf retrieves the cause error in the error chain.
+func CauseOf(err error) error {
+	last := err
+	for {
+		err = errors.Unwrap(last)
+		if err == nil {
+			return last
+		}
+		last = err
+	}
 }
 
 // PopStack unwraps the error, returning the first Stack found in the error chain

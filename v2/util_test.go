@@ -76,3 +76,15 @@ func TestCallStackOf(t *testing.T) {
 	equal(t, failure.CallStackOf(err3).HeadFrame().Line(), baseLine+2)
 	equal(t, failure.CallStackOf(err4).HeadFrame().Line(), baseLine+2)
 }
+
+func TestCauseOf(t *testing.T) {
+	err1 := errors.New("error")
+	err2 := failure.NewStack(err1, []failure.Field{failure.WithCode(1)})
+	err3 := failure.NewStack(err2, []failure.Field{failure.WithCode(2)})
+	err4 := fmt.Errorf("fmt: %w", err3)
+
+	equal(t, failure.CauseOf(err1), err1)
+	equal(t, failure.CauseOf(err2), err1)
+	equal(t, failure.CauseOf(err3), err1)
+	equal(t, failure.CauseOf(err4), err1)
+}
