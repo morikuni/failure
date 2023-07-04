@@ -2,6 +2,7 @@ package failure
 
 import (
 	"fmt"
+	"io"
 	"reflect"
 	"strings"
 )
@@ -52,6 +53,9 @@ type Stack interface {
 	Unwrap() error
 	Value(key any) any
 	As(target any) bool
+
+	// Prevent from implementing Stack without embedding.
+	foreach(f func(k, v any))
 }
 
 var _ Stack = (*stack)(nil)
@@ -101,11 +105,10 @@ func (s *stack) Error() string {
 	if fieldsCount > 0 {
 		first := true
 		b.WriteRune('[')
-		for _, k := range s.order {
-			v := s.fields[k]
+		s.foreach(func(k, v any) {
 			switch k {
 			case KeyCode, KeyCallStack:
-				continue
+				return
 			}
 			if !first {
 				b.WriteString(", ")
@@ -116,7 +119,7 @@ func (s *stack) Error() string {
 			} else {
 				fmt.Fprint(&b, v)
 			}
-		}
+		})
 		b.WriteRune(']')
 	}
 
@@ -125,6 +128,58 @@ func (s *stack) Error() string {
 	}
 
 	return b.String()
+}
+
+// Format implements the fmt.Formatter interface.
+func (s *stack) Format(state fmt.State, verb rune) {
+	if verb != 'v' { // %s
+		io.WriteString(state, s.Error())
+		return
+	}
+
+	if state.Flag('#') { // %#v
+		// print original Go representation ignoring Format (this) function.
+		type stack struct {
+			underlying error
+			fields     map[any]any
+			order      []any
+		}
+		var tmp = stack(*s)
+		fmt.Fprintf(state, "%#v", &tmp)
+		return
+	}
+
+	if !state.Flag('+') { // %v
+		io.WriteString(state, s.Error())
+		return
+	}
+
+	var err error = s
+	for {
+		switch t := err.(type) {
+		case Stack:
+			cs := t.Value(KeyCallStack)
+			if cs != nil {
+				fmt.Fprintf(state, "%+v\n", cs.(CallStack).HeadFrame())
+			}
+			t.foreach(func(k, v any) {
+				switch k {
+				case KeyCallStack:
+					return
+				}
+				state.Write([]byte("    "))
+				if ef, ok := v.(ErrorFormatter); ok {
+					ef.FormatError(state)
+				} else {
+					fmt.Fprint(state, v)
+				}
+				state.Write([]byte("\n"))
+			})
+		default:
+			fmt.Fprintf(state, "%T(%q)\n", err, err.Error())
+
+		}
+	}
 }
 
 func (s *stack) As(target any) bool {
@@ -158,4 +213,11 @@ func (s *stack) As(target any) bool {
 
 func (s *stack) Value(key any) any {
 	return s.fields[key]
+}
+
+func (s *stack) foreach(f func(k, v any)) {
+	for _, k := range s.order {
+		v := s.fields[k]
+		f(k, v)
+	}
 }
