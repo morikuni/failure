@@ -179,6 +179,7 @@ func (s *stack) Format(state fmt.State, verb rune) {
 			fmt.Fprintf(state, "%T(%q)\n", err, err.Error())
 
 		}
+		err = ForceUnwrap(err)
 	}
 }
 
