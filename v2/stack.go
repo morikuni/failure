@@ -180,6 +180,9 @@ func (s *stack) Format(state fmt.State, verb rune) {
 
 		}
 		err = ForceUnwrap(err)
+		if err == nil {
+			break
+		}
 	}
 }
 
